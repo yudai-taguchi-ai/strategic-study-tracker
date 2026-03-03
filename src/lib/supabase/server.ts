@@ -4,9 +4,18 @@ import { cookies } from 'next/headers'
 export async function createClient() {
     const cookieStore = cookies()
 
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    // 環境変数が欠落している場合にクラッシュさせず、エラーをコンソールに出す
+    if (!supabaseUrl || !supabaseAnonKey) {
+        console.error('CRITICAL: Supabase environment variables are missing or incorrect!')
+        // ダミーのクライアントを返すか、エラーを投げる
+    }
+
     return createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        supabaseUrl || '',
+        supabaseAnonKey || '',
         {
             cookies: {
                 get(name: string) {

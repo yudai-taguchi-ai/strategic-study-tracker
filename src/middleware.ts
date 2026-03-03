@@ -9,11 +9,21 @@ export async function middleware(request: NextRequest) {
     })
 
     const { pathname } = request.nextUrl
-    const isAuthPage = pathname.startsWith('/login')
-    const isPublicFile = pathname.includes('.') // manifest.json, favicon.ico など
 
-    // 環境変数が設定されていない、または静的ファイルの場合はスキップ
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || isPublicFile) {
+    // 静的ファイルやAPI、アイコンなどは完全に除外
+    if (
+        pathname.includes('.') ||
+        pathname.startsWith('/_next') ||
+        pathname.startsWith('/api')
+    ) {
+        return response
+    }
+
+    const isAuthPage = pathname.startsWith('/login')
+
+    // 環境変数チェック
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        console.error('Missing Supabase environment variables')
         return response
     }
 
@@ -22,19 +32,26 @@ export async function middleware(request: NextRequest) {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
         {
             cookies: {
-                getAll() {
-                    return request.cookies.getAll()
+                get(name: string) {
+                    return request.cookies.get(name)?.value
                 },
-                setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+                set(name: string, value: string, options: any) {
+                    request.cookies.set({ name, value, ...options })
                     response = NextResponse.next({
                         request: {
                             headers: request.headers,
                         },
                     })
-                    cookiesToSet.forEach(({ name, value, options }) =>
-                        response.cookies.set(name, value, options)
-                    )
+                    response.cookies.set({ name, value, ...options })
+                },
+                remove(name: string, options: any) {
+                    request.cookies.set({ name, value: '', ...options })
+                    response = NextResponse.next({
+                        request: {
+                            headers: request.headers,
+                        },
+                    })
+                    response.cookies.set({ name, value: '', ...options })
                 },
             },
         }
@@ -46,19 +63,12 @@ export async function middleware(request: NextRequest) {
 
     // 未ログインでログインページ以外にいる場合は、ログインページへ
     if (!user && !isAuthPage) {
-        const loginUrl = request.nextUrl.clone()
-        loginUrl.pathname = '/login'
-        // クエリパラメータをクリアしてループを防ぐ
-        loginUrl.search = ''
-        return NextResponse.redirect(loginUrl)
+        return NextResponse.redirect(new URL('/login', request.url))
     }
 
     // ログイン済みでログインページにいる場合は、トップへ
     if (user && isAuthPage) {
-        const homeUrl = request.nextUrl.clone()
-        homeUrl.pathname = '/'
-        homeUrl.search = ''
-        return NextResponse.redirect(homeUrl)
+        return NextResponse.redirect(new URL('/', request.url))
     }
 
     return response
@@ -66,9 +76,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
-        /*
-         * _next/static, _next/image などを除外
-         */
         '/((?!_next/static|_next/image|favicon.ico|manifest.json|icons/).*)',
     ],
 }

@@ -10,11 +10,11 @@ import UploadCoverButton from '@/components/UploadCoverButton'
 export const dynamic = 'force-dynamic'
 
 interface Props {
-    params: Promise<{ id: string }>
+    params: { id: string }
 }
 
 export default async function MaterialDetail({ params }: Props) {
-    const { id } = await params
+    const { id } = params
     const material = await getMaterialById(id)
 
     if (!material) notFound()

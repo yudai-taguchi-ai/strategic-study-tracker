@@ -4,11 +4,11 @@ import { notFound, redirect } from 'next/navigation'
 import { PdfViewer } from '@/components/PdfViewer'
 
 interface Props {
-    params: Promise<{ id: string }>
+    params: { id: string }
 }
 
 export default async function ViewerPage({ params }: Props) {
-    const { id } = await params
+    const { id } = params
     const supabase = await createClient()
 
     // 1. 教材情報を取得

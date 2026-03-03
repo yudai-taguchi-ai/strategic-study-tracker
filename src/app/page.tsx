@@ -11,7 +11,7 @@ interface PageProps {
 export const dynamic = 'force-dynamic'
 
 export default async function Home({ searchParams }: PageProps) {
-    const activeFieldId = searchParams?.field
+    const activeFieldId = searchParams && typeof searchParams === 'object' ? searchParams.field : undefined
 
     const fields = await getFields()
     const simpleFields: SimpleField[] = fields.map(f => ({ id: f.id, name: f.name }))

@@ -36,7 +36,8 @@ export default async function RootLayout({
     children: React.ReactNode
 }) {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data } = await supabase.auth.getUser()
+    const user = data?.user
 
     return (
         <html lang="ja" className={`dark ${inter.className}`}>

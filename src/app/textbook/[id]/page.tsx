@@ -38,7 +38,9 @@ export default async function MaterialDetail({ params }: Props) {
                 <div className="w-full md:w-1/3 aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl relative bg-surface-3 group">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                        src={material.cover_url || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500&q=80'}
+                        src={material.cover_url && material.cover_url.trim() !== ''
+                            ? material.cover_url
+                            : 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500&q=80'}
                         alt={material.title}
                         className="object-cover w-full h-full"
                     />

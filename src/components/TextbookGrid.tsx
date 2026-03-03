@@ -16,7 +16,9 @@ export function TextbookCard({ material }: { material: Material }) {
             <div className="relative aspect-[3/4] overflow-hidden bg-surface-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                    src={material.cover_url || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500&q=80'}
+                    src={material.cover_url && material.cover_url.trim() !== ''
+                        ? material.cover_url
+                        : 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500&q=80'}
                     alt={material.title}
                     className="object-cover w-full h-full opacity-90 group-hover:opacity-100 transition-opacity duration-500"
                 />

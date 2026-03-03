@@ -5,13 +5,12 @@ import { AddTextbookButton } from '@/components/AddTextbookButton'
 import { BookOpen, Video } from 'lucide-react'
 
 interface PageProps {
-    searchParams?: Promise<{ field?: string }>
+    searchParams: { field?: string }
 }
 
 export const dynamic = 'force-dynamic'
 
-export default async function Home(props: PageProps) {
-    const searchParams = await props.searchParams
+export default async function Home({ searchParams }: PageProps) {
     const activeFieldId = searchParams?.field
 
     const fields = await getFields()

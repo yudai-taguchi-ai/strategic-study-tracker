@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { X, Plus, BookOpen, Video, AlertCircle, Camera, Image as ImageIcon, Loader2 } from 'lucide-react'
-import { createMaterial, createField, uploadMaterialCover } from '@/app/actions'
+import { createMaterial, createField, uploadMaterialCover, uploadMaterialPdf } from '@/app/actions'
 import { useRouter } from 'next/navigation'
 
 interface SimpleField { id: string; name: string }
@@ -24,9 +24,10 @@ export function AddTextbookModal({ initialFields, onClose }: Props) {
     const [videoUrl, setVideoUrl] = useState('')
     const [coverFile, setCoverFile] = useState<File | null>(null)
     const [coverPreview, setCoverPreview] = useState<string | null>(null)
+    const [pdfFile, setPdfFile] = useState<File | null>(null)
 
-    // Default to a 100-page book
-    const [totalPages, setTotalPages] = useState<number>(100)
+    // Default to a 100-page book or 10-lecture course
+    const [totalPages, setTotalPages] = useState<number>(type === 'TEXTBOOK' ? 100 : 10)
 
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -79,6 +80,13 @@ export function AddTextbookModal({ initialFields, onClose }: Props) {
                 const formData = new FormData()
                 formData.append('file', coverFile)
                 await uploadMaterialCover(newMaterial.id, formData)
+            }
+
+            // 3. PDFファイルが選択されていればアップロード (教科書のみ)
+            if (type === 'TEXTBOOK' && pdfFile && newMaterial?.id) {
+                const formData = new FormData()
+                formData.append('file', pdfFile)
+                await uploadMaterialPdf(newMaterial.id, formData)
             }
 
             router.refresh()
@@ -213,7 +221,7 @@ export function AddTextbookModal({ initialFields, onClose }: Props) {
                     {/* Total Pages */}
                     <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                            {type === 'TEXTBOOK' ? '総ページ数' : '推定学習時間 (分)'}
+                            {type === 'TEXTBOOK' ? '総ページ数' : '全講義数'}
                         </label>
                         <input
                             type="number"
@@ -224,6 +232,21 @@ export function AddTextbookModal({ initialFields, onClose }: Props) {
                             placeholder="100"
                         />
                     </div>
+
+                    {/* PDF Upload for TEXTBOOK */}
+                    {type === 'TEXTBOOK' && (
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                                同期するPDFファイル
+                            </label>
+                            <input
+                                type="file"
+                                accept="application/pdf"
+                                onChange={e => setPdfFile(e.target.files?.[0] || null)}
+                                className="w-full bg-surface-2 border border-surface-3 rounded-xl px-4 py-3 text-sm text-gray-400 file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-white file:text-black hover:file:bg-gray-200 cursor-pointer"
+                            />
+                        </div>
+                    )}
 
                     {/* video_path for MOVIE */}
                     {type === 'MOVIE' && (

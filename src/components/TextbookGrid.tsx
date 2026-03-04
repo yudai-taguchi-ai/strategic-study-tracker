@@ -23,14 +23,16 @@ export function TextbookCard({ material }: { material: Material }) {
                     className="object-cover w-full h-full opacity-90 group-hover:opacity-100 transition-opacity duration-500"
                 />
 
-                {/* Cloud PDF Status Badge */}
-                <div className="absolute top-4 right-4 bg-surface-0/80 backdrop-blur px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 border border-white/10 shadow-sm">
-                    {hasPdf ? (
-                        <><FileCheck size={14} className="text-green-500" /><span className="text-[10px] uppercase font-bold text-green-500 tracking-wider">Cloud</span></>
-                    ) : (
-                        <><FileWarning size={14} className="text-yellow-500" /><span className="text-[10px] uppercase font-bold text-yellow-500 tracking-wider">No PDF</span></>
-                    )}
-                </div>
+                {/* Cloud PDF Status Badge - Show only for Textbooks */}
+                {material.type === 'TEXTBOOK' && (
+                    <div className="absolute top-4 right-4 bg-surface-0/80 backdrop-blur px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 border border-white/10 shadow-sm">
+                        {hasPdf ? (
+                            <><FileCheck size={14} className="text-green-500" /><span className="text-[10px] uppercase font-bold text-green-500 tracking-wider">Cloud</span></>
+                        ) : (
+                            <><FileWarning size={14} className="text-yellow-500" /><span className="text-[10px] uppercase font-bold text-yellow-500 tracking-wider">No PDF</span></>
+                        )}
+                    </div>
+                )}
             </div>
 
             <div className="p-6 flex flex-col gap-4">

@@ -2,6 +2,8 @@ import { getFields, getMaterials } from './actions'
 import { FilterBar, SimpleField } from '@/components/FilterBar'
 import { TextbookCard } from '@/components/TextbookGrid'
 import { AddTextbookButton } from '@/components/AddTextbookButton'
+import { FieldSettings } from '@/components/FieldSettings'
+import { OnboardingModal } from '@/components/OnboardingModal'
 import { BookOpen, Video } from 'lucide-react'
 
 interface PageProps {
@@ -21,6 +23,7 @@ export default async function Home({ searchParams }: PageProps) {
 
     return (
         <>
+            <OnboardingModal />
             <header className="mb-12 pb-2">
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
@@ -50,9 +53,10 @@ export default async function Home({ searchParams }: PageProps) {
 
                         return (
                             <div key={field.id} className="space-y-12">
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-6">
                                     <div className="h-[2px] flex-1 bg-surface-3" />
                                     <h2 className="text-2xl font-black uppercase tracking-[0.2em]">{field.name}</h2>
+                                    <FieldSettings field={field} />
                                     <div className="h-[2px] flex-1 bg-surface-3" />
                                 </div>
 

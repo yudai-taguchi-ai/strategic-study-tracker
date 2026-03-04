@@ -132,6 +132,28 @@ export async function createField(name: string) {
     return field
 }
 
+export async function updateField(id: string, name: string) {
+    const supabase = await createClient()
+    const { error } = await supabase
+        .from('fields')
+        .update({ name: name.trim() })
+        .eq('id', id)
+
+    if (error) throw new Error('Failed to update field')
+    revalidatePath('/')
+}
+
+export async function deleteField(id: string) {
+    const supabase = await createClient()
+    const { error } = await supabase
+        .from('fields')
+        .delete()
+        .eq('id', id)
+
+    if (error) throw new Error('Failed to delete field')
+    revalidatePath('/')
+}
+
 export async function createMaterial(inputData: {
     title: string
     field_id: string

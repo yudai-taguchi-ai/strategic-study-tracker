@@ -230,6 +230,7 @@ export async function updateProgress(id: string, current_page: number, total_pag
         .from('materials')
         .update({
             current_page,
+            total_pages,
             progress
         })
         .eq('id', id)
@@ -237,9 +238,6 @@ export async function updateProgress(id: string, current_page: number, total_pag
     if (error) {
         throw new Error('Failed to update progress')
     }
-
-    revalidatePath('/')
-    revalidatePath(`/textbook/${id}`)
 }
 
 export async function uploadMaterialPdf(materialId: string, formData: FormData) {

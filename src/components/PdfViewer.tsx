@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition } from 'react'
 import { Document, Page, pdfjs } from 'react-pdf'
-import { ChevronLeft, ChevronRight, Maximize, Edit3, Move, Eraser, ArrowLeft, ZoomIn, ZoomOut } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Maximize, Edit3, Move, Eraser, ArrowLeft, ZoomIn, ZoomOut, RefreshCw } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { updateProgress, getAnnotations } from '@/app/actions'
 import { AnnotationCanvas } from './AnnotationCanvas'
@@ -141,9 +141,20 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                 </div>
 
                 <div className="flex items-center gap-1">
-                    <button onClick={() => setScale(s => Math.max(0.5, s - 0.2))} className="text-gray-400 hover:text-white transition p-3 hover:bg-white/5 rounded-xl"><ZoomOut size={20} /></button>
+                    <button
+                        onClick={() => {
+                            setHasSyncedTotalPages(false)
+                            router.refresh()
+                        }}
+                        className="text-gray-400 hover:text-white transition p-3 hover:bg-white/5 rounded-xl flex items-center gap-2"
+                        title="ページ数を再確認"
+                    >
+                        <RefreshCw size={18} className={isPending ? "animate-spin" : ""} />
+                    </button>
+                    <div className="h-4 w-[1px] bg-white/10 mx-1" />
+                    <button onClick={() => setScale(s => Math.max(0.3, s - 0.2))} className="text-gray-400 hover:text-white transition p-3 hover:bg-white/5 rounded-xl"><ZoomOut size={20} /></button>
                     <button onClick={() => setScale(1.0)} className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white transition px-2">Reset</button>
-                    <button onClick={() => setScale(s => Math.min(3, s + 0.2))} className="text-gray-400 hover:text-white transition p-3 hover:bg-white/5 rounded-xl"><ZoomIn size={20} /></button>
+                    <button onClick={() => setScale(s => Math.min(4, s + 0.2))} className="text-gray-400 hover:text-white transition p-3 hover:bg-white/5 rounded-xl"><ZoomIn size={20} /></button>
                 </div>
             </div>
 

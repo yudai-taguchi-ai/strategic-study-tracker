@@ -7,13 +7,15 @@ import { OnboardingModal } from '@/components/OnboardingModal'
 import { BookOpen, Video, Image as ImageIcon, LayoutGrid } from 'lucide-react'
 
 interface PageProps {
-    searchParams: { [key: string]: string | string[] | undefined }
+    params: Promise<any>
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 export const dynamic = 'force-dynamic'
 
 export default async function Home({ searchParams }: PageProps) {
-    const activeFieldId = searchParams && typeof searchParams === 'object' ? (searchParams.field as string) : undefined
+    const s = await searchParams
+    const activeFieldId = s && typeof s === 'object' ? (s.field as string) : undefined
 
     // 強力なフォールバック
     let fields: any[] = []

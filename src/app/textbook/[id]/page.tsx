@@ -13,11 +13,11 @@ import { AddTextbookButton } from '@/components/AddTextbookButton'
 export const dynamic = 'force-dynamic'
 
 interface Props {
-    params: { id: string }
+    params: Promise<{ id: string }>
 }
 
-export default async function MaterialDetail({ params }: Props) {
-    const { id } = params
+export default async function MaterialDetail({ params: paramsPromise }: Props) {
+    const { id } = await paramsPromise
     const material = await getMaterialById(id)
     const fields = await getFields()
 
@@ -108,12 +108,14 @@ export default async function MaterialDetail({ params }: Props) {
                             </div>
                         </div>
                     ) : (
-                        <ManualProgressTracker
-                            materialId={material.id}
-                            currentPage={material.current_page || 0}
-                            totalPages={material.total_pages || 1}
-                            type={material.type as 'MOVIE' | 'WEBSITE'}
-                        />
+                        !isCourse && (
+                            <ManualProgressTracker
+                                materialId={material.id}
+                                currentPage={material.current_page || 0}
+                                totalPages={material.total_pages || 1}
+                                type={material.type as 'MOVIE' | 'WEBSITE'}
+                            />
+                        )
                     )}
 
                     {/* 講座内のコンテンツ一覧 */}

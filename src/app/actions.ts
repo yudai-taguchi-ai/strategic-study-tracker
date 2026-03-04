@@ -194,6 +194,34 @@ export async function createMaterial(inputData: {
     return record
 }
 
+export async function updateMaterial(id: string, inputData: {
+    title: string
+    field_id: string
+    total_pages?: number
+    video_path?: string
+}) {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('materials')
+        .update({
+            title: inputData.title,
+            field_id: inputData.field_id,
+            total_pages: inputData.total_pages,
+            video_path: inputData.video_path
+        })
+        .eq('id', id)
+        .select()
+        .single()
+
+    if (error) {
+        throw new Error('Failed to update material')
+    }
+
+    revalidatePath(`/textbook/${id}`)
+    revalidatePath('/')
+    return data
+}
+
 export async function updateProgress(id: string, current_page: number, total_pages: number) {
     const supabase = await createClient()
     const progress = total_pages > 0 ? (current_page / total_pages) * 100 : 0

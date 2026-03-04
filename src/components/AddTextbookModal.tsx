@@ -24,7 +24,6 @@ export default function AddTextbookModal({ isOpen, onClose, fields: initialField
     const [isCreatingField, setIsCreatingField] = useState(false)
     const [type, setType] = useState<'TEXTBOOK' | 'MOVIE' | 'WEBSITE' | 'COURSE'>('TEXTBOOK')
     const [coverImageUrl, setCoverImageUrl] = useState('')
-    const [videoUrl, setVideoUrl] = useState('')
     const [coverFile, setCoverFile] = useState<File | null>(null)
     const [coverPreview, setCoverPreview] = useState<string | null>(null)
     const [pdfFile, setPdfFile] = useState<File | null>(null)
@@ -279,22 +278,6 @@ export default function AddTextbookModal({ isOpen, onClose, fields: initialField
                         </div>
                     )}
 
-                    {/* external URL for MOVIE and WEBSITE */}
-                    {(type === 'MOVIE' || type === 'WEBSITE') && (
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                                {type === 'MOVIE' ? '動画の外部URL' : 'サイトのURL'} <span className="text-white normal-case font-bold">({type === 'MOVIE' ? 'YouTubeやVimeoなど' : '公式ドキュメントや参考サイト'})</span>
-                            </label>
-                            <input
-                                type="url"
-                                value={videoUrl}
-                                onChange={e => setVideoUrl(e.target.value)}
-                                className="w-full bg-surface-2 border border-surface-3 rounded-xl px-4 py-3 text-white outline-none focus:border-white/50 transition"
-                                placeholder="https://..."
-                                required
-                            />
-                        </div>
-                    )}
 
                     {/* Actions */}
                     <div className="flex gap-3 pt-2">

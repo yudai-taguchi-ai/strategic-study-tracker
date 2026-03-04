@@ -9,6 +9,7 @@ import UploadCoverButton from '@/components/UploadCoverButton'
 import { ManualProgressTracker } from '@/components/ManualProgressTracker'
 import { TextbookCard } from '@/components/TextbookGrid'
 import { AddTextbookButton } from '@/components/AddTextbookButton'
+import EditMaterialButton from '@/components/EditMaterialButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -71,13 +72,16 @@ export default async function MaterialDetail({ params: paramsPromise }: Props) {
                 </div>
 
                 <div className="flex-1 space-y-6 w-full">
-                    <div>
-                        <span className="text-xs font-black uppercase tracking-[0.2em] text-gray-500 block mb-2">
-                            {material.fields?.name || '未分類'}
-                        </span>
-                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-none mb-6">
-                            {material.title || 'Untitled'}
-                        </h1>
+                    <div className="flex justify-between items-start gap-4">
+                        <div className="flex-1">
+                            <span className="text-xs font-black uppercase tracking-[0.2em] text-gray-500 block mb-2">
+                                {material.fields?.name || '未分類'}
+                            </span>
+                            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-none mb-6">
+                                {material.title || 'Untitled'}
+                            </h1>
+                        </div>
+                        <EditMaterialButton material={material} fields={fields} />
                     </div>
 
                     <div className="flex flex-wrap gap-4 text-sm font-bold uppercase tracking-widest text-gray-400">

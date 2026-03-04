@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { X, Plus, BookOpen, Video, AlertCircle, Camera, Image as ImageIcon, Loader2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { X, Plus, BookOpen, Video, AlertCircle, Camera, Image as ImageIcon, Loader2, LayoutGrid } from 'lucide-react'
 import { createMaterial, createField, uploadMaterialCover, uploadMaterialPdf } from '@/app/actions'
 import { useRouter } from 'next/navigation'
 
@@ -13,24 +13,37 @@ interface AddTextbookModalProps {
     fields: SimpleField[]
     materialId?: string // Used when updating
     parentId?: string    // Used when adding into a course
+    defaultFieldId?: string // Pre-selected field
 }
 
-export default function AddTextbookModal({ isOpen, onClose, fields: initialFields, parentId }: AddTextbookModalProps) {
+export default function AddTextbookModal({ isOpen, onClose, fields: initialFields, parentId, defaultFieldId }: AddTextbookModalProps) {
     const router = useRouter()
     const [title, setTitle] = useState('')
-    const [fields, setFields] = useState<SimpleField[]>(initialFields) // Keep this for dynamic field creation
-    const [fieldId, setFieldId] = useState(initialFields[0]?.id ?? '')
+    const [fields, setFields] = useState<SimpleField[]>(initialFields)
+    const [fieldId, setFieldId] = useState(defaultFieldId || initialFields[0]?.id || '')
     const [newFieldName, setNewFieldName] = useState('')
     const [isCreatingField, setIsCreatingField] = useState(false)
     const [type, setType] = useState<'TEXTBOOK' | 'MOVIE' | 'WEBSITE' | 'COURSE'>('TEXTBOOK')
-    const [coverImageUrl, setCoverImageUrl] = useState('')
     const [coverFile, setCoverFile] = useState<File | null>(null)
     const [coverPreview, setCoverPreview] = useState<string | null>(null)
     const [pdfFile, setPdfFile] = useState<File | null>(null)
-
-    // Default values
-    const [totalPages, setTotalPages] = useState<number>(type === 'TEXTBOOK' ? 100 : 10)
     const [url, setUrl] = useState('')
+    const [totalPages, setTotalPages] = useState<number>(100)
+
+    // Reset state when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            setTitle('')
+            setFieldId(defaultFieldId || initialFields[0]?.id || '')
+            setType('TEXTBOOK')
+            setTotalPages(100)
+            setUrl('')
+            setPdfFile(null)
+            setCoverFile(null)
+            setCoverPreview(null)
+            setIsCreatingField(false)
+        }
+    }, [isOpen, defaultFieldId, initialFields])
 
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -73,9 +86,8 @@ export default function AddTextbookModal({ isOpen, onClose, fields: initialField
                 title: title.trim(),
                 field_id: fieldId,
                 type,
-                cover_url: coverImageUrl,
                 total_pages: totalPages,
-                video_path: url, // Now uses the 'url' state
+                video_path: url,
                 parent_id: parentId
             })
 
@@ -225,9 +237,9 @@ export default function AddTextbookModal({ isOpen, onClose, fields: initialField
                                 className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border font-bold text-sm transition ${type === 'WEBSITE' ? 'bg-white text-black border-white' : 'bg-surface-2 text-gray-400 border-surface-3 hover:border-white/30'}`}>
                                 <ImageIcon size={16} />参考サイト
                             </button>
-                            <button type="button" onClick={() => setType('COURSE')}
+                            <button type="button" onClick={() => { setType('COURSE'); setTotalPages(10) }}
                                 className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border font-bold text-sm transition ${type === 'COURSE' ? 'bg-white text-black border-white' : 'bg-surface-2 text-gray-400 border-surface-3 hover:border-white/30'}`}>
-                                <BookOpen size={16} />講座
+                                <LayoutGrid size={16} />講座
                             </button>
                         </div>
                     </div>

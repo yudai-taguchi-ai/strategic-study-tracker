@@ -6,7 +6,7 @@ import AddTextbookModal from './AddTextbookModal'
 
 interface SimpleField { id: string; name: string }
 
-export function AddTextbookButton({ fields, parentId }: { fields: SimpleField[], parentId?: string }) {
+export function AddTextbookButton({ fields, parentId, defaultFieldId }: { fields: SimpleField[], parentId?: string, defaultFieldId?: string }) {
     const [isOpen, setIsOpen] = useState(false)
 
     return (
@@ -24,6 +24,7 @@ export function AddTextbookButton({ fields, parentId }: { fields: SimpleField[],
                 onClose={() => setIsOpen(false)}
                 fields={fields}
                 parentId={parentId}
+                defaultFieldId={defaultFieldId}
             />
         </>
     )

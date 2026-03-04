@@ -130,14 +130,70 @@ export default async function MaterialDetail({ params: paramsPromise }: Props) {
                                     <LayoutGrid size={24} className="text-orange-400" />
                                     構成カリキュラム
                                 </h3>
-                                <AddTextbookButton fields={fields} parentId={id} />
+                                <AddTextbookButton fields={fields} parentId={id} defaultFieldId={material.field_id} />
                             </div>
 
                             {childMaterials.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    {childMaterials.map(item => (
-                                        <TextbookCard key={item.id} material={item} />
-                                    ))}
+                                <div className="space-y-12">
+                                    {/* Categorized View */}
+                                    {(() => {
+                                        const courses = childMaterials.filter(t => t.type === 'COURSE')
+                                        const textbooks = childMaterials.filter(t => t.type === 'TEXTBOOK')
+                                        const movies = childMaterials.filter(t => t.type === 'MOVIE')
+                                        const websites = childMaterials.filter(t => t.type === 'WEBSITE')
+
+                                        return (
+                                            <>
+                                                {courses.length > 0 && (
+                                                    <div className="space-y-6">
+                                                        <div className="flex items-center gap-3 text-orange-400">
+                                                            <LayoutGrid size={18} />
+                                                            <span className="text-xs font-bold uppercase tracking-widest">講座</span>
+                                                        </div>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                            {courses.map(tb => <TextbookCard key={tb.id} material={tb} />)}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {textbooks.length > 0 && (
+                                                    <div className="space-y-6">
+                                                        <div className="flex items-center gap-3 text-gray-400">
+                                                            <BookOpen size={18} />
+                                                            <span className="text-xs font-bold uppercase tracking-widest">教科書 / PDF</span>
+                                                        </div>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                            {textbooks.map(tb => <TextbookCard key={tb.id} material={tb} />)}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {movies.length > 0 && (
+                                                    <div className="space-y-6">
+                                                        <div className="flex items-center gap-3 text-gray-400">
+                                                            <Video size={18} />
+                                                            <span className="text-xs font-bold uppercase tracking-widest">動画教材</span>
+                                                        </div>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                            {movies.map(tb => <TextbookCard key={tb.id} material={tb} />)}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {websites.length > 0 && (
+                                                    <div className="space-y-6">
+                                                        <div className="flex items-center gap-3 text-gray-400">
+                                                            <LinkIcon size={18} />
+                                                            <span className="text-xs font-bold uppercase tracking-widest">参考サイト</span>
+                                                        </div>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                            {websites.map(tb => <TextbookCard key={tb.id} material={tb} />)}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </>
+                                        )
+                                    })()}
                                 </div>
                             ) : (
                                 <div className="bg-surface-2 border border-dashed border-surface-3 p-12 rounded-3xl text-center">

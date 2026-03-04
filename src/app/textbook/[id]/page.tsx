@@ -11,6 +11,7 @@ import { TextbookCard } from '@/components/TextbookGrid'
 import { AddTextbookButton } from '@/components/AddTextbookButton'
 import EditMaterialButton from '@/components/EditMaterialButton'
 import { CurriculumItem } from '@/components/CurriculumItem'
+import DetachFromCourseButton from '@/components/DetachFromCourseButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -81,6 +82,11 @@ export default async function MaterialDetail({ params: paramsPromise }: Props) {
                             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-none mb-6">
                                 {material.title || 'Untitled'}
                             </h1>
+                            {material.parent_id && (
+                                <div className="mt-2">
+                                    <DetachFromCourseButton id={material.id} />
+                                </div>
+                            )}
                         </div>
                         <EditMaterialButton material={material} fields={fields} />
                     </div>
@@ -193,22 +199,15 @@ export default async function MaterialDetail({ params: paramsPromise }: Props) {
                     </div>
 
                     {childMaterials.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                            {(() => {
-                                const courses = childMaterials.filter(t => t.type === 'COURSE')
-                                const textbooks = childMaterials.filter(t => t.type === 'TEXTBOOK')
-                                const movies = childMaterials.filter(t => t.type === 'MOVIE')
-                                const websites = childMaterials.filter(t => t.type === 'WEBSITE')
-
-                                return (
-                                    <>
-                                        {courses.map(tb => <CurriculumItem key={tb.id} material={tb} />)}
-                                        {textbooks.map(tb => <CurriculumItem key={tb.id} material={tb} />)}
-                                        {movies.map(tb => <CurriculumItem key={tb.id} material={tb} />)}
-                                        {websites.map(tb => <CurriculumItem key={tb.id} material={tb} />)}
-                                    </>
-                                )
-                            })()}
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                            {childMaterials.map(tb => (
+                                <div key={tb.id} className="relative group/material">
+                                    <TextbookCard material={tb} />
+                                    <div className="absolute top-3 right-3 z-20 opacity-0 group-hover/material:opacity-100 transition-all translate-y-2 group-hover/material:translate-y-0">
+                                        <DetachFromCourseButton id={tb.id} variant="icon" />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     ) : (
                         <div className="bg-surface-2/40 border-2 border-dashed border-surface-3 p-20 rounded-[3rem] text-center">

@@ -435,6 +435,20 @@ export async function deleteMaterial(id: string) {
     revalidatePath('/')
     redirect('/')
 }
+
+export async function detachMaterialFromCourse(id: string) {
+    const supabase = await createClient()
+    const { error } = await supabase
+        .from('materials')
+        .update({ parent_id: null })
+        .eq('id', id)
+
+    if (error) throw new Error('Failed to detach material')
+
+    revalidatePath('/')
+    revalidatePath(`/textbook/${id}`)
+}
+
 export async function getCourseMaterials(courseId: string) {
     const supabase = await createClient()
     const { data, error } = await supabase

@@ -32,7 +32,8 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
     const [lineWidth, setLineWidth] = useState(2)
     const [initialAnnotations, setInitialAnnotations] = useState<any[]>([])
     const router = useRouter()
-    const [containerWidth, setContainerWidth] = useState<number>(800)
+    const [containerWidth, setContainerWidth] = useState<number>(1000)
+    const [hasSyncedTotalPages, setHasSyncedTotalPages] = useState(false)
 
     // Window Resize Handler - Maximize for iPad
     useEffect(() => {
@@ -55,7 +56,7 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
 
     // Sync progress
     useEffect(() => {
-        if (pageNumber !== initialPage) {
+        if (pageNumber !== initialPage && numPages > 1) {
             const timer = setTimeout(() => {
                 startTransition(async () => {
                     await updateProgress(materialId, pageNumber, numPages)
@@ -67,8 +68,9 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
 
     const onDocumentLoadSuccess = ({ numPages: loadedNumPages }: { numPages: number }) => {
         setNumPages(loadedNumPages)
-        // ページ数がDB（初期値1など）とズレている場合は自動更新
-        if (loadedNumPages > 0 && (totalPageCount <= 1 || loadedNumPages !== totalPageCount)) {
+        // ページ数がDB（初期値1など）とズレている場合は自動更新（一度だけ実行）
+        if (!hasSyncedTotalPages && loadedNumPages > 0 && (totalPageCount <= 1 || loadedNumPages !== totalPageCount)) {
+            setHasSyncedTotalPages(true)
             startTransition(async () => {
                 await updateProgress(materialId, pageNumber, loadedNumPages)
             })

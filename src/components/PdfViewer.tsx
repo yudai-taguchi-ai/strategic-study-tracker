@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useTransition } from 'react'
 import { Document, Page, pdfjs } from 'react-pdf'
-import { ChevronLeft, ChevronRight, Maximize, Edit3, Move, Eraser } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Maximize, Edit3, Move, Eraser, ArrowLeft, ZoomIn, ZoomOut } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { updateProgress, getAnnotations } from '@/app/actions'
 import { AnnotationCanvas } from './AnnotationCanvas'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
@@ -30,6 +31,20 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
     const [activeColor, setActiveColor] = useState('#FFFFFF')
     const [lineWidth, setLineWidth] = useState(2)
     const [initialAnnotations, setInitialAnnotations] = useState<any[]>([])
+    const router = useRouter()
+    const [containerWidth, setContainerWidth] = useState<number>(800)
+
+    // Window Resize Handler
+    useEffect(() => {
+        function handleResize() {
+            // iPad Pro etc usually have > 800px width.
+            // We subtract some padding for the UI.
+            setContainerWidth(window.innerWidth - 32)
+        }
+        handleResize()
+        window.addEventListener('resize', handleResize)
+        return () => window.removeEventListener('resize', handleResize)
+    }, [])
 
     // Load annotations
     useEffect(() => {
@@ -61,6 +76,13 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
             {/* Top Header */}
             <div className="flex items-center justify-between px-6 py-4 bg-surface-1/50 backdrop-blur-md border-b border-white/5 z-50">
                 <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => router.back()}
+                        className="p-2 -ml-2 text-gray-400 hover:text-white transition group"
+                    >
+                        <ArrowLeft size={24} strokeWidth={3} className="group-hover:-translate-x-1 transition-transform" />
+                    </button>
+                    <div className="h-4 w-[1px] bg-white/10 mx-1" />
                     <span className="text-sm font-black tracking-widest text-white/50">{pageNumber} / {numPages}</span>
                 </div>
 
@@ -101,20 +123,30 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
 
                     <button
                         onClick={() => setIsPencilMode(false)}
-                        className={`p-2.5 rounded-xl transition-all ${!isPencilMode ? 'bg-white text-black' : 'bg-transparent text-gray-400'}`}
+                        className={`p-2.5 rounded-xl transition-all ${!isPencilMode ? 'bg-white text-black' : 'bg-transparent text-gray-400 border border-transparent hover:border-white/10'}`}
                     >
                         <Move size={18} />
                     </button>
                 </div>
 
-                <button onClick={() => setScale(s => s + 0.1)} className="text-gray-400 hover:text-white transition p-2"><Maximize size={18} /></button>
+                <div className="flex items-center gap-1">
+                    <button onClick={() => setScale(s => Math.max(0.5, s - 0.2))} className="text-gray-400 hover:text-white transition p-3 hover:bg-white/5 rounded-xl"><ZoomOut size={20} /></button>
+                    <button onClick={() => setScale(1.0)} className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white transition px-2">Reset</button>
+                    <button onClick={() => setScale(s => Math.min(3, s + 0.2))} className="text-gray-400 hover:text-white transition p-3 hover:bg-white/5 rounded-xl"><ZoomIn size={20} /></button>
+                </div>
             </div>
 
             {/* Main Content */}
-            <div className={`flex-1 overflow-auto flex justify-center items-start pt-4 pb-20 scrollbar-hide select-none relative ${isPencilMode ? 'touch-none' : 'touch-pan-y'}`}>
-                <div className="relative shadow-2xl">
+            <div className={`flex-1 overflow-auto flex justify-center items-start pt-4 pb-32 scrollbar-hide select-none relative ${isPencilMode ? 'touch-none' : 'touch-pan-y'}`}>
+                <div className="relative shadow-2xl bg-white">
                     <Document file={pdfUrl} onLoadSuccess={onDocumentLoadSuccess}>
-                        <Page pageNumber={pageNumber} scale={scale} renderAnnotationLayer={false} renderTextLayer={false} />
+                        <Page
+                            pageNumber={pageNumber}
+                            scale={scale}
+                            width={containerWidth}
+                            renderAnnotationLayer={false}
+                            renderTextLayer={false}
+                        />
                     </Document>
 
                     <AnnotationCanvas

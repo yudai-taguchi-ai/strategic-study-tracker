@@ -67,10 +67,10 @@ export default async function MaterialDetail({ params }: Props) {
                 <div className="flex-1 space-y-6 w-full">
                     <div>
                         <span className="text-xs font-black uppercase tracking-[0.2em] text-gray-500 block mb-2">
-                            {material.fields?.name}
+                            {material.fields?.name || '未分類'}
                         </span>
                         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-none mb-6">
-                            {material.title}
+                            {material.title || 'Untitled'}
                         </h1>
                     </div>
 

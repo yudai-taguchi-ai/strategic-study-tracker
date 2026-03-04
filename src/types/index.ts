@@ -15,6 +15,7 @@ export interface Material {
     type: 'TEXTBOOK' | 'MOVIE' | 'WEBSITE'
     cover_url: string | null
     pdf_path: string | null
+    video_path: string | null
     total_pages: number
     current_page: number
     scroll_ratio: number

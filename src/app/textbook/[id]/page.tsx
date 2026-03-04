@@ -10,6 +10,7 @@ import { ManualProgressTracker } from '@/components/ManualProgressTracker'
 import { TextbookCard } from '@/components/TextbookGrid'
 import { AddTextbookButton } from '@/components/AddTextbookButton'
 import EditMaterialButton from '@/components/EditMaterialButton'
+import { CurriculumItem } from '@/components/CurriculumItem'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,7 +36,7 @@ export default async function MaterialDetail({ params: paramsPromise }: Props) {
     const childMaterials = isCourse ? await getCourseMaterials(id) : []
 
     return (
-        <div className="max-w-4xl mx-auto pb-20 px-4">
+        <div className="max-w-6xl mx-auto pb-20 px-4 md:px-8">
             <Link
                 href="/"
                 className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-white mb-10 transition group"
@@ -99,8 +100,8 @@ export default async function MaterialDetail({ params: paramsPromise }: Props) {
                     {material.type === 'TEXTBOOK' ? (
                         <div className="pt-6">
                             <div className="flex justify-between items-end mb-3">
-                                <span className="text-xs font-bold tracking-widest uppercase text-gray-500">
-                                    ページ {material.current_page} / {material.total_pages}
+                                <span className="text-xs font-bold tracking-widest uppercase text-gray-400">
+                                    Progress: {material.current_page} / {material.total_pages} pages
                                 </span>
                                 <span className="text-xl font-black font-mono tracking-wider">{Math.round(progressPercent)}%</span>
                             </div>
@@ -122,146 +123,159 @@ export default async function MaterialDetail({ params: paramsPromise }: Props) {
                         )
                     )}
 
-                    {/* 講座内のコンテンツ一覧 */}
-                    {isCourse && (
-                        <div className="pt-12 space-y-8">
-                            <div className="flex items-center justify-between border-b border-surface-3 pb-4">
-                                <h3 className="text-xl font-black uppercase tracking-widest flex items-center gap-3">
-                                    <LayoutGrid size={24} className="text-orange-400" />
-                                    構成カリキュラム
-                                </h3>
-                                <AddTextbookButton fields={fields} parentId={id} defaultFieldId={material.field_id} />
-                            </div>
+                    {/* Action Buttons - Moved Up for priority */}
+                    {!isCourse && (
+                        <div className="pt-8 border-t border-surface-3 space-y-6">
+                            {material.type !== 'TEXTBOOK' ? (
+                                <div className="bg-surface-2 p-6 rounded-3xl border border-surface-3 relative overflow-hidden group/link">
+                                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover/link:opacity-30 group-hover/link:rotate-12 transition-all">
+                                        {isMovie ? <Video size={100} /> : <LinkIcon size={100} />}
+                                    </div>
+                                    <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        {isMovie ? <Video size={14} /> : (isCourse ? <LayoutGrid size={14} /> : <LinkIcon size={14} />)}
+                                        {isMovie ? '動画教材ソース' : (isCourse ? '講座ポータル / 参考URL' : 'サイトのURL')}
+                                    </p>
+                                    <div className="text-sm font-mono text-blue-400 truncate bg-black/30 p-4 rounded-xl border border-surface-3 mb-6">
+                                        {material.video_path || 'URLが設定されていません'}
+                                    </div>
 
-                            {childMaterials.length > 0 ? (
-                                <div className="space-y-12">
-                                    {/* Categorized View */}
-                                    {(() => {
-                                        const courses = childMaterials.filter(t => t.type === 'COURSE')
-                                        const textbooks = childMaterials.filter(t => t.type === 'TEXTBOOK')
-                                        const movies = childMaterials.filter(t => t.type === 'MOVIE')
-                                        const websites = childMaterials.filter(t => t.type === 'WEBSITE')
-
-                                        return (
-                                            <>
-                                                {courses.length > 0 && (
-                                                    <div className="space-y-6">
-                                                        <div className="flex items-center gap-3 text-orange-400">
-                                                            <LayoutGrid size={18} />
-                                                            <span className="text-xs font-bold uppercase tracking-widest">講座</span>
-                                                        </div>
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                                            {courses.map(tb => <TextbookCard key={tb.id} material={tb} />)}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {textbooks.length > 0 && (
-                                                    <div className="space-y-6">
-                                                        <div className="flex items-center gap-3 text-gray-400">
-                                                            <BookOpen size={18} />
-                                                            <span className="text-xs font-bold uppercase tracking-widest">教科書 / PDF</span>
-                                                        </div>
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                                            {textbooks.map(tb => <TextbookCard key={tb.id} material={tb} />)}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {movies.length > 0 && (
-                                                    <div className="space-y-6">
-                                                        <div className="flex items-center gap-3 text-gray-400">
-                                                            <Video size={18} />
-                                                            <span className="text-xs font-bold uppercase tracking-widest">動画教材</span>
-                                                        </div>
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                                            {movies.map(tb => <TextbookCard key={tb.id} material={tb} />)}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {websites.length > 0 && (
-                                                    <div className="space-y-6">
-                                                        <div className="flex items-center gap-3 text-gray-400">
-                                                            <LinkIcon size={18} />
-                                                            <span className="text-xs font-bold uppercase tracking-widest">参考サイト</span>
-                                                        </div>
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                                            {websites.map(tb => <TextbookCard key={tb.id} material={tb} />)}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </>
-                                        )
-                                    })()}
+                                    {material.video_path && (
+                                        <a
+                                            href={material.video_path}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="bg-white text-black font-black uppercase tracking-widest text-[10px] px-8 py-4 rounded-2xl flex items-center justify-center gap-3 transition-all w-full shadow-2xl hover:-translate-y-1 hover:bg-gray-100"
+                                        >
+                                            {isMovie ? <Play size={16} strokeWidth={3} /> : <LinkIcon size={16} strokeWidth={3} />}
+                                            {isMovie ? '外部プレイヤーで再生' : (isCourse ? '講座用リンクを開く' : 'サイトを開く')}
+                                        </a>
+                                    )}
                                 </div>
                             ) : (
-                                <div className="bg-surface-2 border border-dashed border-surface-3 p-12 rounded-3xl text-center">
-                                    <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">
-                                        まだ教材が追加されていません
-                                    </p>
-                                </div>
+                                <>
+                                    <UploadPdfButton materialId={material.id} hasPdf={hasPdf} />
+                                    <Link
+                                        href={hasPdf ? `/viewer/${material.id}` : '#'}
+                                        className={`
+                                            font-black uppercase tracking-widest text-[10px] px-8 py-5 rounded-2xl flex items-center justify-center gap-3 transition-all w-full shadow-2xl hover:-translate-y-1
+                                            ${hasPdf
+                                                ? 'bg-white text-black hover:bg-gray-100'
+                                                : 'bg-surface-2 text-gray-600 cursor-not-allowed opacity-50'}
+                                        `}
+                                    >
+                                        <FileText size={18} strokeWidth={3} />
+                                        リーダーを開く
+                                    </Link>
+                                </>
                             )}
+                            <DeleteMaterialButton id={material.id} title={material.title} />
                         </div>
                     )}
-
-                    {/* アクションボタン */}
-                    <div className="pt-8 border-t border-surface-3 space-y-6">
-                        {material.type !== 'TEXTBOOK' ? (
-                            <div className="bg-surface-2 p-6 rounded-2xl border border-surface-3">
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                    {isMovie ? <Video size={14} /> : (isCourse ? <LayoutGrid size={14} /> : <LinkIcon size={14} />)}
-                                    {isMovie ? '動画教材ソース' : (isCourse ? '講座ポータル / 参考URL' : 'サイトのURL')}
-                                </p>
-                                <div className="text-sm font-mono text-blue-400 truncate bg-black/30 p-3 rounded-lg border border-surface-3 mb-4">
-                                    {material.video_path || 'URLが設定されていません'}
-                                </div>
-
-                                {material.video_path && (
-                                    <a
-                                        href={material.video_path}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="bg-white text-black font-black uppercase tracking-widest text-xs px-6 py-4 rounded-xl flex items-center justify-center gap-2 transition-all w-full shadow-lg hover:-translate-y-0.5"
-                                    >
-                                        {isMovie ? <Play size={16} strokeWidth={2.5} /> : (isCourse ? <LinkIcon size={16} strokeWidth={2.5} /> : <LinkIcon size={16} strokeWidth={2.5} />)}
-                                        {isMovie ? '外部プレイヤーで再生' : (isCourse ? '講座用リンクを開く' : 'サイトを開く')}
-                                    </a>
-                                )}
-                            </div>
-                        ) : (
-                            <>
-                                <UploadPdfButton materialId={material.id} hasPdf={hasPdf} />
-                                <Link
-                                    href={hasPdf ? `/viewer/${material.id}` : '#'}
-                                    className={`
-                                        font-bold uppercase tracking-widest text-xs px-6 py-5 rounded-xl flex items-center justify-center gap-3 transition-all w-full shadow-lg hover:-translate-y-0.5
-                                        ${hasPdf
-                                            ? 'bg-white text-black hover:bg-gray-200'
-                                            : 'bg-surface-2 text-gray-600 cursor-not-allowed opacity-50'}
-                                    `}
-                                >
-                                    <FileText size={18} strokeWidth={2.5} />
-                                    リーダーを開く
-                                </Link>
-                            </>
-                        )}
-
-                        <DeleteMaterialButton id={material.id} title={material.title} />
-                    </div>
                 </div>
             </div>
 
-            <div className="space-y-6">
-                <h2 className="text-2xl font-black uppercase tracking-[0.2em] mb-8 border-b border-surface-3 pb-4">
-                    情報
-                </h2>
-                <div className="bg-surface-1 border border-surface-2 p-8 rounded-3xl space-y-4">
-                    <p className="text-gray-400 text-sm leading-relaxed">
-                        {isMovie
-                            ? '動画ファイルをアップロードして、どこからでもストリーミング再生できます。学習した時間は自動的に記録されます。'
-                            : (isWebsite ? '参考サイトや公式ドキュメントへのリンクを管理できます。学習した項目（チャプター）ごとに進捗を記録できます。' : 'PDFをアップロードすると、Apple Pencilでの手書き注釈などがクラウドに保存され、iPad等の他デバイスと自動同期されるようになります。')}
-                    </p>
+            {/* Full-width Curriculum Section for Courses */}
+            {isCourse && (
+                <div className="space-y-10 mb-20 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                    <div className="flex items-center justify-between border-b border-surface-3 pb-6">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-orange-400/10 rounded-2xl">
+                                <LayoutGrid size={32} className="text-orange-400" />
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-black uppercase tracking-widest leading-none mb-1">
+                                    カリキュラム構成
+                                </h3>
+                                <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Selected Curriculum</p>
+                            </div>
+                        </div>
+                        <AddTextbookButton fields={fields} parentId={id} defaultFieldId={material.field_id} />
+                    </div>
+
+                    {childMaterials.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                            {(() => {
+                                const courses = childMaterials.filter(t => t.type === 'COURSE')
+                                const textbooks = childMaterials.filter(t => t.type === 'TEXTBOOK')
+                                const movies = childMaterials.filter(t => t.type === 'MOVIE')
+                                const websites = childMaterials.filter(t => t.type === 'WEBSITE')
+
+                                return (
+                                    <>
+                                        {courses.map(tb => <CurriculumItem key={tb.id} material={tb} />)}
+                                        {textbooks.map(tb => <CurriculumItem key={tb.id} material={tb} />)}
+                                        {movies.map(tb => <CurriculumItem key={tb.id} material={tb} />)}
+                                        {websites.map(tb => <CurriculumItem key={tb.id} material={tb} />)}
+                                    </>
+                                )
+                            })()}
+                        </div>
+                    ) : (
+                        <div className="bg-surface-2/40 border-2 border-dashed border-surface-3 p-20 rounded-[3rem] text-center">
+                            <h4 className="text-lg font-black uppercase tracking-widest text-gray-600 mb-2">No Contents Yet</h4>
+                            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">
+                                カリキュラムが追加されていません
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Action buttons specifically for course portal */}
+                    <div className="pt-10 mt-20 border-t border-surface-3 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                        <div className="bg-surface-2 p-8 rounded-[2rem] border border-surface-3 relative overflow-hidden transition-all hover:bg-surface-2/60">
+                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <LinkIcon size={14} />
+                                講座ポータル / 参考URL
+                            </p>
+                            <div className="text-sm font-mono text-blue-400 truncate bg-black/40 p-4 rounded-xl border border-surface-3 mb-8">
+                                {material.video_path || 'URLが設定されていません'}
+                            </div>
+
+                            {material.video_path && (
+                                <a
+                                    href={material.video_path}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="bg-white text-black font-black uppercase tracking-widest text-[10px] px-8 py-5 rounded-2xl flex items-center justify-center gap-3 transition-all w-full shadow-2xl hover:-translate-y-1 hover:bg-gray-50"
+                                >
+                                    <LinkIcon size={18} strokeWidth={3} />
+                                    講座リンクを開く
+                                </a>
+                            )}
+                        </div>
+                        <div className="space-y-6">
+                            <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-4">システム設定</p>
+                            <DeleteMaterialButton id={material.id} title={material.title} />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="mt-20 border-t border-surface-3 pt-10 grid grid-cols-1 md:grid-cols-2 gap-8 pb-32">
+                <div className="space-y-6">
+                    <h2 className="text-xl font-black uppercase tracking-widest border-b border-white/5 pb-4">
+                        教材の概要
+                    </h2>
+                    <div className="bg-surface-2/30 p-8 rounded-[2rem] border border-surface-3">
+                        <p className="text-gray-400 text-sm leading-loose">
+                            {isMovie
+                                ? '動画ファイルをアップロードして、どこからでもストリーミング再生できます。学習した時間は自動的に記録されます。'
+                                : (isWebsite ? '参考サイトや公式ドキュメントへのリンクを管理できます。学習した項目（チャプター）ごとに進捗を記録できます。' : 'PDFをアップロードすると、Apple Pencilでの手書き注釈などがクラウドに保存され、iPad等の他デバイスと自動同期されるようになります。')}
+                        </p>
+                    </div>
+                </div>
+                <div className="space-y-6">
+                    <h2 className="text-xl font-black uppercase tracking-widest border-b border-white/5 pb-4">
+                        学習ステータス
+                    </h2>
+                    <div className="bg-surface-2/30 p-8 rounded-[2rem] border border-surface-3 space-y-4">
+                        <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-gray-500">
+                            <span>Final Progress</span>
+                            <span className="text-white">{Math.round(progressPercent)}%</span>
+                        </div>
+                        <div className="h-2 bg-surface-3 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500" style={{ width: `${progressPercent}%` }} />
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

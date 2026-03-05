@@ -77,16 +77,63 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
         }
     }
 
-    const goToPrevPage = () => setPageNumber(p => Math.max(1, p - 1))
-    const goToNextPage = () => setPageNumber(p => Math.min(numPages, p + 1))
+    // 1. Global Lockdown Effect for Pencil Mode
+    useEffect(() => {
+        if (!isPencilMode) return
+
+        // Create a style element to lock the entire body
+        const style = document.createElement('style')
+        style.id = 'pencil-lock-style'
+        style.innerHTML = `
+            body {
+                touch-action: none !important;
+                -webkit-user-select: none !important;
+                user-select: none !important;
+                overscroll-behavior: none !important;
+                overflow: hidden !important;
+            }
+            input, button, a {
+                touch-action: auto !important;
+            }
+        `
+        document.head.appendChild(style)
+
+        // Aggressively capture and kill all zoom/system gestures
+        const killEvent = (e: Event) => {
+            if (isPencilMode) {
+                e.preventDefault()
+                e.stopPropagation()
+                e.stopImmediatePropagation()
+            }
+        }
+
+        // Double-tap zoom killing (Capturing phase)
+        window.addEventListener('dblclick', killEvent, { capture: true })
+        // Multi-touch zoom prevention
+        window.addEventListener('touchstart', (e) => {
+            if (isPencilMode && e.touches.length > 1) killEvent(e)
+        }, { capture: true, passive: false })
+        // Context menu suppression
+        window.addEventListener('contextmenu', killEvent, { capture: true })
+
+        return () => {
+            document.getElementById('pencil-lock-style')?.remove()
+            window.removeEventListener('dblclick', killEvent, { capture: true })
+            window.removeEventListener('touchstart', killEvent)
+            window.removeEventListener('contextmenu', killEvent, { capture: true })
+        }
+    }, [isPencilMode])
+
+    const goToPrevPage = () => !isPencilMode && setPageNumber(p => Math.max(1, p - 1))
+    const goToNextPage = () => !isPencilMode && setPageNumber(p => Math.min(numPages, p + 1))
+    const handleResetScale = () => !isPencilMode && setScale(1.0)
 
     return (
         <div
-            className={`flex flex-col h-screen bg-black overflow-hidden relative ${isPencilMode ? 'select-none touch-none' : ''}`}
-            style={isPencilMode ? { WebkitUserSelect: 'none', userSelect: 'none', touchAction: 'none' } : {}}
+            className={`flex flex-col h-screen bg-black overflow-hidden relative ${isPencilMode ? 'select-none touch-none cursor-crosshair' : ''}`}
             onDoubleClick={(e) => isPencilMode && e.preventDefault()}
         >
-            {/* 1. Header - HIDDEN in Pencil Mode to prevent any click-through or ghost hits */}
+            {/* 1. Header - Physically REMOVED in Pencil Mode */}
             {!isPencilMode && (
                 <div className="flex items-center justify-between px-6 py-4 bg-surface-1/50 backdrop-blur-md border-b border-white/5 z-50">
                     <div className="flex items-center gap-4">
@@ -140,7 +187,7 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                         </button>
                         <div className="h-4 w-[1px] bg-white/10 mx-1" />
                         <button onClick={() => setScale(s => Math.max(0.3, s - 0.2))} className="text-gray-400 hover:text-white transition p-3 hover:bg-white/5 rounded-xl"><ZoomOut size={20} /></button>
-                        <button onClick={() => setScale(1.0)} className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white transition px-2">Reset</button>
+                        <button onClick={handleResetScale} className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white transition px-2">Reset</button>
                         <button onClick={() => setScale(s => Math.min(4, s + 0.2))} className="text-gray-400 hover:text-white transition p-3 hover:bg-white/5 rounded-xl"><ZoomIn size={20} /></button>
                     </div>
                 </div>

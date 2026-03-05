@@ -81,20 +81,24 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
     useEffect(() => {
         if (!isPencilMode) return
 
-        // Create a style element to lock the entire body and all children
+        // Create a style element to lock the entire document
         const style = document.createElement('style')
         style.id = 'pencil-lock-style'
         style.innerHTML = `
+            html, body {
+                -webkit-user-select: none !important;
+                -webkit-touch-callout: none !important;
+                -webkit-tap-highlight-color: transparent !important;
+                user-select: none !important;
+                touch-action: none !important;
+                overscroll-behavior: none !important;
+                overflow: hidden !important;
+            }
             * {
                 -webkit-user-select: none !important;
                 -webkit-touch-callout: none !important;
                 -webkit-tap-highlight-color: transparent !important;
                 user-select: none !important;
-            }
-            body {
-                touch-action: none !important;
-                overscroll-behavior: none !important;
-                overflow: hidden !important;
             }
             input, button, a, div[role="button"] {
                 -webkit-user-select: auto !important;
@@ -107,9 +111,10 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
         // Aggressively capture and kill all zoom/system gestures
         const killEvent = (e: Event) => {
             if (isPencilMode) {
-                e.preventDefault()
+                if (e.cancelable) e.preventDefault()
                 e.stopPropagation()
                 e.stopImmediatePropagation()
+                window.getSelection()?.removeAllRanges()
             }
         }
 
@@ -121,26 +126,34 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
 
         // Double-tap zoom killing (Capturing phase)
         window.addEventListener('dblclick', killEvent, { capture: true })
-        // Multi-touch zoom prevention
-        window.addEventListener('touchstart', (e) => {
-            if (isPencilMode && e.touches.length > 1) killEvent(e)
-            if (isPencilMode) window.getSelection()?.removeAllRanges()
-        }, { capture: true, passive: false })
+
+        // Multi-touch zoom & Selection prevention
+        const handleTouchStart = (e: TouchEvent) => {
+            if (!isPencilMode) return
+            if (e.touches.length > 1 && e.cancelable) {
+                e.preventDefault()
+            }
+            window.getSelection()?.removeAllRanges()
+        }
+
+        window.addEventListener('touchstart', handleTouchStart, { capture: true, passive: false })
 
         // OS Level events suppression
         window.addEventListener('contextmenu', killEvent, { capture: true })
         window.addEventListener('selectstart', killEvent, { capture: true })
         window.addEventListener('selectionchange', killSelection, { capture: true })
         window.addEventListener('gesturestart', killEvent, { capture: true })
+        window.addEventListener('dragstart', killEvent, { capture: true })
 
         return () => {
             document.getElementById('pencil-lock-style')?.remove()
             window.removeEventListener('dblclick', killEvent, { capture: true })
-            window.removeEventListener('touchstart', killEvent)
+            window.removeEventListener('touchstart', handleTouchStart, { capture: true })
             window.removeEventListener('contextmenu', killEvent, { capture: true })
             window.removeEventListener('selectstart', killEvent, { capture: true })
             window.removeEventListener('selectionchange', killSelection, { capture: true })
             window.removeEventListener('gesturestart', killEvent, { capture: true })
+            window.removeEventListener('dragstart', killEvent, { capture: true })
         }
     }, [isPencilMode])
 

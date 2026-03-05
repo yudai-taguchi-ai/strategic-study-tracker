@@ -116,8 +116,8 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                     </div>
                 </div>
 
-                {/* Handwriting Toolbar */}
-                <div className="flex items-center gap-2 bg-surface-2 p-1 rounded-2xl border border-white/5 z-[250] relative">
+                {/* Handwriting Toolbar - Highest Z-Index */}
+                <div className="flex items-center gap-2 bg-surface-2 p-1 rounded-2xl border border-white/5 z-[400] relative">
                     <button
                         onClick={() => { setIsPencilMode(!isPencilMode); setActiveTool('pen') }}
                         className={`p-2.5 rounded-xl transition-all ${isPencilMode && activeTool === 'pen' ? 'bg-white text-black' : 'bg-transparent text-gray-500 hover:text-white'}`}
@@ -137,7 +137,7 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                             <div className="h-4 w-[1px] bg-white/10 mx-1" />
 
                             <div className="flex gap-1 px-2">
-                                {['#000000', '#FF3B30', '#007AFF', '#FFFFFF'].map(c => (
+                                {['#FF3B30', '#007AFF', '#000000', '#FFFFFF'].map(c => (
                                     <button
                                         key={c}
                                         onClick={() => { setActiveColor(c); setActiveTool('pen') }}
@@ -159,7 +159,8 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                     </button>
                 </div>
 
-                <div className="flex items-center gap-1">
+                {/* Right side tools (Disable when drawing) */}
+                <div className={`flex items-center gap-1 transition-opacity ${isPencilMode ? 'opacity-20 pointer-events-none' : ''}`}>
                     <button
                         onClick={() => {
                             setHasSyncedTotalPages(false)
@@ -177,8 +178,8 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                 </div>
             </div>
 
-            {/* Main Content - Minimal padding for maximum PDF size */}
-            <div className={`flex-1 overflow-auto flex justify-center items-start pt-0 pb-20 scrollbar-hide relative bg-black ${isPencilMode ? 'touch-none select-none' : 'touch-pan-y'}`}>
+            {/* Main Content - Raised Z-Index when drawing to overlap the Header's non-essential areas */}
+            <div className={`flex-1 overflow-auto flex justify-center items-start pt-0 pb-20 scrollbar-hide relative bg-black ${isPencilMode ? 'touch-none select-none z-[300]' : 'touch-pan-y'}`}>
                 <div className="relative shadow-2xl bg-white origin-top">
                     <Document
                         file={pdfUrl}

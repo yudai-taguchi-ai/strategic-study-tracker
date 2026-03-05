@@ -130,7 +130,13 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
         // Multi-touch zoom & Selection prevention
         const handleTouchStart = (e: TouchEvent) => {
             if (!isPencilMode) return
-            if (e.touches.length > 1 && e.cancelable) {
+
+            // ツールバー以外へのタッチはすべて最優先レイヤーで preventDefault する
+            // これにより指1本であっても、iPadOSの「長押しメニュー」の起点を物理的に破壊する
+            const target = e.target as HTMLElement;
+            if (target.closest('button') || target.closest('input')) return;
+
+            if (e.cancelable) {
                 e.preventDefault()
             }
             window.getSelection()?.removeAllRanges()
@@ -165,6 +171,7 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
         <div
             className={`flex flex-col h-screen bg-black overflow-hidden relative ${isPencilMode ? 'select-none touch-none cursor-crosshair' : ''}`}
             onDoubleClick={(e) => isPencilMode && e.preventDefault()}
+            {...({ 'disable-live-text-selection': isPencilMode ? 'true' : 'false' } as any)}
         >
             {/* 1. Header - Physically REMOVED in Pencil Mode */}
             {!isPencilMode && (

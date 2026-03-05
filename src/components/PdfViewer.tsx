@@ -81,7 +81,10 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
     const goToNextPage = () => setPageNumber(p => Math.min(numPages, p + 1))
 
     return (
-        <div className="flex flex-col h-screen bg-black overflow-hidden relative">
+        <div
+            className={`flex flex-col h-screen bg-black overflow-hidden relative ${isPencilMode ? 'select-none touch-none' : ''}`}
+            style={isPencilMode ? { WebkitUserSelect: 'none', userSelect: 'none' } : {}}
+        >
             {/* Top Header */}
             <div className="flex items-center justify-between px-6 py-4 bg-surface-1/50 backdrop-blur-md border-b border-white/5 z-50">
                 <div className="flex items-center gap-4">

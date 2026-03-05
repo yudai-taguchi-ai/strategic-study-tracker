@@ -28,30 +28,28 @@ interface Props {
 
 export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = [], isActive, mode, color, lineWidth }: Props) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
-    const [isDrawing, setIsDrawing] = useState(false)
-    const [currentStroke, setCurrentStroke] = useState<Point[]>([])
+    const isDrawingRef = useRef(false)
+    const lastPointRef = useRef<Point | null>(null)
+    const currentPointsRef = useRef<Point[]>([])
     const [allStrokes, setAllStrokes] = useState<Stroke[]>([])
 
-    // Load initial data
-    useEffect(() => {
-        const strokes = initialAnnotations.map(ann => ({
-            id: ann.id,
-            ...ann.data
-        }))
-        setAllStrokes(strokes)
-    }, [initialAnnotations])
+    // 高精細（Retina）ディスプレイ対応のためのスケール取得
+    const getPixelRatio = () => (typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1)
 
+    // 全画の再描画（Reactの状態が変更された時やリサイズ時に呼び出し）
     const drawAll = useCallback((strokes: Stroke[]) => {
         const canvas = canvasRef.current
         const ctx = canvas?.getContext('2d')
         if (!ctx || !canvas) return
 
+        const ratio = getPixelRatio()
         ctx.clearRect(0, 0, canvas.width, canvas.height)
+
         strokes.forEach(stroke => {
             if (!stroke.points || stroke.points.length < 2) return
             ctx.beginPath()
             ctx.strokeStyle = stroke.color
-            ctx.lineWidth = stroke.width
+            ctx.lineWidth = stroke.width * ratio // 倍率に合わせて太さを調整
             ctx.lineJoin = 'round'
             ctx.lineCap = 'round'
 
@@ -65,26 +63,47 @@ export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = 
         })
     }, [])
 
+    // 初回ロード
+    useEffect(() => {
+        const strokes = initialAnnotations.map(ann => ({
+            id: ann.id,
+            ...ann.data
+        }))
+        setAllStrokes(strokes)
+    }, [initialAnnotations])
+
+    // リサイズ対応（PDFのサイズに合わせる）
     useEffect(() => {
         const canvas = canvasRef.current
         if (!canvas) return
 
-        const handleResize = () => {
+        const updateSize = () => {
             const parent = canvas.parentElement
             if (parent) {
-                canvas.width = parent.clientWidth
-                canvas.height = parent.clientHeight
+                const ratio = getPixelRatio()
+                const width = parent.clientWidth
+                const height = parent.clientHeight
+
+                // キャンバスの内部解像度を物理ピクセルに合わせる
+                canvas.width = width * ratio
+                canvas.height = height * ratio
+                // 表示上のサイズ（CSS）は親に合わせる
+                canvas.style.width = `${width}px`
+                canvas.style.height = `${height}px`
+
                 drawAll(allStrokes)
             }
         }
 
-        handleResize()
-        window.addEventListener('resize', handleResize)
-        return () => window.removeEventListener('resize', handleResize)
+        const observer = new ResizeObserver(updateSize)
+        if (canvas.parentElement) observer.observe(canvas.parentElement)
+        updateSize()
+
+        return () => observer.disconnect()
     }, [allStrokes, drawAll])
 
     const findAndEraseStroke = async (x: number, y: number) => {
-        const threshold = 0.01 // 判定のしきい値
+        const threshold = 0.02
         const strokeToErase = allStrokes.find(stroke =>
             stroke.points.some(p => Math.abs(p.x - x) < threshold && Math.abs(p.y - y) < threshold)
         )
@@ -101,82 +120,90 @@ export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = 
 
     const startAction = (e: React.PointerEvent) => {
         if (!isActive) return
+
+        // イベントの伝播を完全に止める（背景のテキスト選択などを防ぐ）
+        e.stopPropagation()
+        if (e.cancelable) e.preventDefault()
+
         const canvas = canvasRef.current
         if (!canvas) return
 
-        // ポインターをキャプチャして、枠外に出てもイベントを継続させる
         canvas.setPointerCapture(e.pointerId)
 
-        // ブラウザの標準動作（選択など）を抑制
-        if (e.cancelable) e.preventDefault()
-
         const rect = canvas.getBoundingClientRect()
-        const x = (e.clientX - rect.left) / canvas.width
-        const y = (e.clientY - rect.top) / canvas.height
+        const x = (e.clientX - rect.left) / rect.width
+        const y = (e.clientY - rect.top) / rect.height
 
         if (mode === 'eraser') {
             findAndEraseStroke(x, y)
         } else {
-            setIsDrawing(true)
-            setCurrentStroke([{ x, y, p: e.pressure || 0.5 }])
+            isDrawingRef.current = true
+            const point = { x, y, p: e.pressure || 0.5 }
+            lastPointRef.current = point
+            currentPointsRef.current = [point]
         }
     }
 
     const doAction = (e: React.PointerEvent) => {
-        if (!isDrawing && mode !== 'eraser') return
         if (!isActive) return
+        e.stopPropagation()
+        if (e.cancelable) e.preventDefault()
 
         const canvas = canvasRef.current
         if (!canvas) return
 
-        // 描画中のブラウザ動作（スクロールなど）を抑制
-        if (e.cancelable) e.preventDefault()
-
         const rect = canvas.getBoundingClientRect()
-        const x = (e.clientX - rect.left) / canvas.width
-        const y = (e.clientY - rect.top) / canvas.height
+        const x = (e.clientX - rect.left) / rect.width
+        const y = (e.clientY - rect.top) / rect.height
 
         if (mode === 'eraser') {
             findAndEraseStroke(x, y)
             return
         }
 
+        if (!isDrawingRef.current) return
+
         const ctx = canvas.getContext('2d')
         if (!ctx) return
 
+        const ratio = getPixelRatio()
         const newPoint = { x, y, p: e.pressure || 0.5 }
-        setCurrentStroke(prev => [...prev, newPoint])
 
+        // 即時描画（Reactの再レンダリングを介さないので爆速）
         ctx.strokeStyle = color
-        ctx.lineWidth = lineWidth
+        ctx.lineWidth = lineWidth * ratio
         ctx.lineJoin = 'round'
         ctx.lineCap = 'round'
         ctx.beginPath()
 
-        const lastPoint = currentStroke[currentStroke.length - 1]
+        const lastPoint = lastPointRef.current
         if (lastPoint) {
             ctx.moveTo(lastPoint.x * canvas.width, lastPoint.y * canvas.height)
             ctx.lineTo(x * canvas.width, y * canvas.height)
             ctx.stroke()
         }
+
+        lastPointRef.current = newPoint
+        currentPointsRef.current.push(newPoint)
     }
 
     const stopAction = async (e: React.PointerEvent) => {
+        if (!isActive) return
+
         const canvas = canvasRef.current
-        if (canvas) {
-            canvas.releasePointerCapture(e.pointerId)
-        }
+        if (canvas) canvas.releasePointerCapture(e.pointerId)
 
-        if (!isDrawing) return
-        setIsDrawing(false)
+        if (!isDrawingRef.current) return
+        isDrawingRef.current = false
 
-        if (currentStroke.length > 1) {
+        if (currentPointsRef.current.length > 1) {
             const newStrokeContent = {
-                points: currentStroke,
+                points: currentPointsRef.current,
                 color: color,
                 width: lineWidth
             }
 
+            // UIを更新
             setAllStrokes(prev => [...prev, { ...newStrokeContent, id: 'temp-' + Date.now() }])
 
             try {
@@ -186,13 +213,16 @@ export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = 
                     type: 'stroke',
                     data: newStrokeContent
                 })
+                // 仮IDを本物へ
                 setAllStrokes(prev => prev.map(s => s.id?.toString().startsWith('temp') ? { ...newStrokeContent, id: saved.id } : s))
             } catch (err) {
                 console.error('Save failed:', err)
                 setAllStrokes(prev => prev.filter(s => !s.id?.toString().startsWith('temp')))
             }
         }
-        setCurrentStroke([])
+
+        lastPointRef.current = null
+        currentPointsRef.current = []
     }
 
     return (
@@ -201,13 +231,17 @@ export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = 
             onPointerDown={startAction}
             onPointerMove={doAction}
             onPointerUp={stopAction}
-            onPointerLeave={stopAction}
+            onPointerOut={stopAction} // 枠外に出た時も終了
             style={{
                 touchAction: 'none',
+                WebkitUserSelect: 'none',
                 userSelect: 'none',
-                WebkitUserSelect: 'none'
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                display: 'block'
             }}
-            className={`absolute inset-0 z-[60] ${isActive ? (mode === 'pen' ? 'cursor-crosshair' : 'cursor-cell') : 'pointer-events-none'}`}
+            className={`z-[100] ${isActive ? (mode === 'pen' ? 'cursor-crosshair' : 'cursor-cell') : 'pointer-events-none'}`}
         />
     )
 }

@@ -75,29 +75,70 @@ export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = 
         // メイン画面へ即座に反映
         const canvas = canvasRef.current
         const ctx = ctxRef.current
-        if (canvas && ctx) {
+        if (canvas && ctx && bg.width > 0 && bg.height > 0) {
             ctx.clearRect(0, 0, canvas.width, canvas.height)
             ctx.drawImage(bg, 0, 0)
         }
     }, [])
 
-    // コンテキスト初期化
+    // コンテキストの初期化（再構築の防止）
+    useEffect(() => {
+        const canvas = canvasRef.current
+        if (canvas && !ctxRef.current) {
+            ctxRef.current = canvas.getContext('2d', { desynchronized: true, alpha: true }) as CanvasRenderingContext2D
+        }
+        if (!bufferCanvasRef.current && typeof document !== 'undefined') {
+            const bg = document.createElement('canvas')
+            bufferCanvasRef.current = bg
+            bufferCtxRef.current = bg.getContext('2d', { alpha: true })
+        }
+    }, [])
+
+    // 初期化とリサイズ管理
     useEffect(() => {
         const canvas = canvasRef.current
         if (!canvas) return
 
-        // 低遅延モードの有効化
-        const ctx = canvas.getContext('2d', { desynchronized: true, alpha: true })
-        if (ctx) ctxRef.current = ctx as CanvasRenderingContext2D
+        const updateSize = () => {
+            const parent = canvas.parentElement
+            const bg = bufferCanvasRef.current
+            if (parent && bg) {
+                const ratio = getPixelRatio()
+                const w = parent.clientWidth * ratio
+                const h = parent.clientHeight * ratio
 
-        // 裏キャンバスの作成
-        const bg = document.createElement('canvas')
-        bufferCanvasRef.current = bg
-        bufferCtxRef.current = bg.getContext('2d', { alpha: true })
+                // 無効なサイズの場合はスキップ
+                if (w === 0 || h === 0) return
+
+                canvas.width = w
+                canvas.height = h
+                canvas.style.width = parent.clientWidth + 'px'
+                canvas.style.height = parent.clientHeight + 'px'
+
+                bg.width = w
+                bg.height = h
+                updateBuffer()
+            }
+        }
+
+        const obs = new ResizeObserver(updateSize)
+        if (canvas.parentElement) obs.observe(canvas.parentElement)
+
+        // DBデータの反映
+        strokesRef.current = initialAnnotations.map(ann => ({ id: ann.id, ...ann.data }))
+        updateSize()
+
+        return () => obs.disconnect()
+    }, [initialAnnotations, updateBuffer])
+
+    // ネイティブレイヤーでの超高速イベントハンドリング
+    useEffect(() => {
+        const canvas = canvasRef.current
+        if (!canvas) return
 
         const handleDown = (e: PointerEvent) => {
             if (!isActive) return
-            // ペン以外の不要な圧力をフィルタリング（パームリジェクション）
+            // ペン入力と確実なタッチのみを許可（パームリジェクション）
             if (e.pointerType === 'touch' && e.pressure === 0) return
 
             e.preventDefault()
@@ -128,13 +169,11 @@ export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = 
             e.preventDefault()
             e.stopImmediatePropagation()
 
-            const canvas = canvasRef.current
             const ctx = ctxRef.current
             if (!canvas || !ctx) return
             const rect = canvas.getBoundingClientRect()
             const ratio = getPixelRatio()
 
-            // 全サブドットと予測ドットを使用
             const coalesced = (e as any).getCoalescedEvents?.() || [e]
 
             ctx.strokeStyle = color
@@ -147,7 +186,6 @@ export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = 
                 const y = (ev.clientY - rect.top) / rect.height
                 const last = currentPointsRef.current[currentPointsRef.current.length - 1]
 
-                // 1点1点描画し、一切の「隙」をなくす
                 ctx.beginPath()
                 ctx.moveTo(last.x * canvas.width, last.y * canvas.height)
                 ctx.lineTo(x * canvas.width, y * canvas.height)
@@ -163,13 +201,15 @@ export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = 
             canvas.releasePointerCapture(e.pointerId)
 
             if (currentPointsRef.current.length > 1 && mode !== 'eraser') {
-                const newStroke = { points: [...currentPointsRef.current], color, width: lineWidth }
+                const tempId = 'temp-' + Date.now()
+                const newStroke = { id: tempId, points: [...currentPointsRef.current], color, width: lineWidth }
                 strokesRef.current.push(newStroke)
-                updateBuffer() // 裏側に書き込んで固定
+                updateBuffer()
 
                 saveAnnotation({ material_id: materialId, page_number: pageNumber, type: 'stroke', data: newStroke })
                     .then(saved => {
-                        strokesRef.current[strokesRef.current.length - 1].id = saved.id
+                        const idx = strokesRef.current.findIndex(s => s.id === tempId)
+                        if (idx !== -1) strokesRef.current[idx].id = saved.id
                     })
             }
             currentPointsRef.current = []
@@ -188,49 +228,17 @@ export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = 
         }
     }, [isActive, mode, color, lineWidth, materialId, pageNumber, updateBuffer])
 
-    // 初期化とリサイズ
-    useEffect(() => {
-        strokesRef.current = initialAnnotations.map(ann => ({ id: ann.id, ...ann.data }))
-        updateBuffer()
-    }, [initialAnnotations, updateBuffer])
-
-    useEffect(() => {
-        const canvas = canvasRef.current
-        if (!canvas) return
-        const updateSize = () => {
-            const parent = canvas.parentElement
-            const bg = bufferCanvasRef.current
-            if (parent && bg) {
-                const ratio = getPixelRatio()
-                const w = parent.clientWidth * ratio
-                const h = parent.clientHeight * ratio
-
-                canvas.width = w
-                canvas.height = h
-                canvas.style.width = parent.clientWidth + 'px'
-                canvas.style.height = parent.clientHeight + 'px'
-
-                bg.width = w
-                bg.height = h
-                updateBuffer()
-            }
-        }
-        const obs = new ResizeObserver(updateSize)
-        if (canvas.parentElement) obs.observe(canvas.parentElement)
-        updateSize()
-        return () => obs.disconnect()
-    }, [updateBuffer])
-
     return (
         <canvas
             ref={canvasRef}
             style={{
-                touchAction: 'none',
+                touchAction: isActive ? 'none' : 'auto',
                 position: 'absolute',
                 top: 0, left: 0,
                 display: 'block',
                 willChange: 'transform, contents',
-                cursor: 'crosshair'
+                cursor: isActive ? (mode === 'pen' ? 'crosshair' : 'cell') : 'default',
+                pointerEvents: isActive ? 'auto' : 'none'
             }}
             className="z-[200] select-none"
         />

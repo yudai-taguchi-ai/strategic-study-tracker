@@ -92,9 +92,25 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                         <ArrowLeft size={24} strokeWidth={3} className="group-hover:-translate-x-1 transition-transform" />
                     </button>
                     <div className="h-4 w-[1px] bg-white/10 mx-1" />
-                    <span className="text-sm font-black tracking-widest text-white/70 tabular-nums">
-                        {pageNumber} <span className="text-white/20 mx-1">/</span> {numPages}
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="number"
+                            min="1"
+                            max={numPages}
+                            value={pageNumber}
+                            onChange={(e) => {
+                                const val = parseInt(e.target.value)
+                                if (!isNaN(val) && val >= 1 && val <= numPages) {
+                                    setPageNumber(val)
+                                }
+                            }}
+                            className="w-12 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs font-black font-mono text-center focus:border-white/30 outline-none transition-all"
+                        />
+                        <span className="text-[10px] font-black tracking-widest text-white/20 uppercase">of</span>
+                        <span className="text-[10px] font-black tracking-widest text-white/40 tabular-nums">
+                            {numPages}
+                        </span>
+                    </div>
                 </div>
 
                 {/* Handwriting Toolbar */}
@@ -189,10 +205,45 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
 
             {/* iPad Nav Controls */}
             {!isPencilMode && (
-                <div className="fixed bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-surface-2/80 backdrop-blur-xl border border-white/10 px-6 py-4 rounded-3xl shadow-2xl z-50">
-                    <button onClick={goToPrevPage} disabled={pageNumber <= 1} className="p-3 text-white hover:bg-white/10 rounded-2xl disabled:opacity-20"><ChevronLeft size={28} /></button>
-                    <div className="h-8 w-[1px] bg-white/10 mx-2" />
-                    <button onClick={goToNextPage} disabled={pageNumber >= numPages} className="p-3 text-white hover:bg-white/10 rounded-2xl disabled:opacity-20"><ChevronRight size={28} /></button>
+                <div className="fixed bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-6 bg-surface-2/80 backdrop-blur-xl border border-white/10 px-8 py-4 rounded-3xl shadow-2xl z-50 min-w-[320px] md:min-w-[540px]">
+                    <div className="flex items-center gap-1">
+                        <button onClick={() => setPageNumber(1)} disabled={pageNumber <= 1} className="p-2 text-white/40 hover:text-white transition-colors disabled:opacity-0" title="最初に戻る"><ChevronLeft size={20} strokeWidth={3} /><ChevronLeft size={20} strokeWidth={3} className="-ml-3" /></button>
+                        <button onClick={goToPrevPage} disabled={pageNumber <= 1} className="p-3 text-white hover:bg-white/10 rounded-2xl disabled:opacity-20 transition-colors"><ChevronLeft size={28} /></button>
+                    </div>
+
+                    <div className="flex-1 flex flex-col gap-2">
+                        <div className="flex justify-between items-center px-1">
+                            <span className="text-[10px] font-black font-mono text-white/40">{pageNumber}</span>
+                            <span className="text-[10px] font-black font-mono text-white/40">{numPages}</span>
+                        </div>
+                        <div className="relative h-6 flex items-center group/slider">
+                            {/* Visual Track */}
+                            <div className="absolute w-full h-1 bg-white/10 rounded-full" />
+                            <div
+                                className="absolute h-1 bg-white rounded-full transition-all duration-300"
+                                style={{ width: `${(pageNumber / numPages) * 100}%` }}
+                            />
+                            {/* Actual Input */}
+                            <input
+                                type="range"
+                                min="1"
+                                max={numPages}
+                                value={pageNumber}
+                                onChange={(e) => setPageNumber(parseInt(e.target.value))}
+                                className="absolute w-full opacity-0 cursor-pointer z-10"
+                            />
+                            {/* Thumb Visual */}
+                            <div
+                                className="absolute w-4 h-4 bg-white rounded-full shadow-xl transition-all pointer-events-none group-hover/slider:scale-125"
+                                style={{ left: `calc(${(pageNumber / numPages) * 100}% - 8px)` }}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                        <button onClick={goToNextPage} disabled={pageNumber >= numPages} className="p-3 text-white hover:bg-white/10 rounded-2xl disabled:opacity-20 transition-colors"><ChevronRight size={28} /></button>
+                        <button onClick={() => setPageNumber(numPages)} disabled={pageNumber >= numPages} className="p-2 text-white/40 hover:text-white transition-colors disabled:opacity-0" title="最後へ"><ChevronRight size={20} strokeWidth={3} /><ChevronRight size={20} strokeWidth={3} className="-ml-3" /></button>
+                    </div>
                 </div>
             )}
         </div>

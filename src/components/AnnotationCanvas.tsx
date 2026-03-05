@@ -132,6 +132,19 @@ export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = 
         if (!canvas) return
         ctxRef.current = canvas.getContext('2d', { desynchronized: true, alpha: true })
 
+        // 消去判定の共通ロジック
+        const eraseAt = (x: number, y: number) => {
+            const threshold = 0.02
+            const found = strokesRef.current.find(s => s.points.some(p => Math.abs(p.x - x) < threshold && Math.abs(p.y - y) < threshold))
+            if (found?.id) {
+                strokesRef.current = strokesRef.current.filter(s => s.id !== found.id)
+                updateBuffer()
+                deleteAnnotation(found.id)
+                return true
+            }
+            return false
+        }
+
         const handleDown = (e: PointerEvent) => {
             if (!isActive) return
 
@@ -152,19 +165,13 @@ export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = 
             currentPointsRef.current = [{ x, y }]
 
             if (mode === 'eraser') {
-                const threshold = 0.02
-                const found = strokesRef.current.find(s => s.points.some(p => Math.abs(p.x - x) < threshold && Math.abs(p.y - y) < threshold))
-                if (found?.id) {
-                    strokesRef.current = strokesRef.current.filter(s => s.id !== found.id)
-                    updateBuffer()
-                    deleteAnnotation(found.id)
-                }
+                eraseAt(x, y)
             }
             canvas.setPointerCapture(e.pointerId)
         }
 
         const handleMove = (e: PointerEvent) => {
-            if (!isActive || !isDrawingRef.current || mode === 'eraser') return
+            if (!isActive || !isDrawingRef.current) return
             e.preventDefault()
             e.stopImmediatePropagation()
             window.getSelection()?.removeAllRanges()
@@ -176,26 +183,31 @@ export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = 
 
             const coalesced = (e as any).getCoalescedEvents?.() || [e]
 
-            ctx.strokeStyle = color
-            ctx.lineWidth = lineWidth * ratio
-            ctx.lineJoin = 'round'
-            ctx.lineCap = 'round'
-
             coalesced.forEach((ev: PointerEvent) => {
                 const x = (ev.clientX - rect.left) / rect.width
                 const y = (ev.clientY - rect.top) / rect.height
-                const last = currentPointsRef.current[currentPointsRef.current.length - 1]
 
-                // 動的な間引き：距離があまりに近すぎる点は無視（計算コスト削減）
-                const dist = Math.sqrt(Math.pow(x - last.x, 2) + Math.pow(y - last.y, 2))
-                if (dist < 0.001) return
+                if (mode === 'eraser') {
+                    // 移動中も連続して消去判定を行う（ブラシ消しゴム）
+                    eraseAt(x, y)
+                } else {
+                    const last = currentPointsRef.current[currentPointsRef.current.length - 1]
 
-                ctx.beginPath()
-                ctx.moveTo(last.x * rect.width * ratio, last.y * rect.height * ratio)
-                ctx.lineTo(x * rect.width * ratio, y * rect.height * ratio)
-                ctx.stroke()
+                    // 動的な間引き：距離があまりに近すぎる点は無視（計算コスト削減）
+                    const dist = Math.sqrt(Math.pow(x - last.x, 2) + Math.pow(y - last.y, 2))
+                    if (dist < 0.001) return
 
-                currentPointsRef.current.push({ x, y })
+                    ctx.strokeStyle = color
+                    ctx.lineWidth = lineWidth * ratio
+                    ctx.lineJoin = 'round'
+                    ctx.lineCap = 'round'
+                    ctx.beginPath()
+                    ctx.moveTo(last.x * rect.width * ratio, last.y * rect.height * ratio)
+                    ctx.lineTo(x * rect.width * ratio, y * rect.height * ratio)
+                    ctx.stroke()
+
+                    currentPointsRef.current.push({ x, y })
+                }
             })
         }
 

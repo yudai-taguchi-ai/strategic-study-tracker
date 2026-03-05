@@ -224,11 +224,25 @@ export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = 
         canvas.addEventListener('pointerup', handleUp, { capture: true, passive: false })
         canvas.addEventListener('pointercancel', handleUp, { capture: true, passive: false })
 
+        // 究極の「長押しメニュー」殺し
+        // PointerEvent だけでなく、生（Native）の TouchEvent を直接封殺する
+        const killTouch = (e: TouchEvent) => {
+            if (isActive) {
+                if (e.cancelable) e.preventDefault()
+                e.stopImmediatePropagation()
+            }
+        }
+        canvas.addEventListener('touchstart', killTouch, { capture: true, passive: false })
+        canvas.addEventListener('touchend', killTouch, { capture: true, passive: false })
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault(), { capture: true })
+
         return () => {
             canvas.removeEventListener('pointerdown', handleDown, { capture: true })
             canvas.removeEventListener('pointermove', handleMove, { capture: true })
             canvas.removeEventListener('pointerup', handleUp, { capture: true })
             canvas.removeEventListener('pointercancel', handleUp, { capture: true })
+            canvas.removeEventListener('touchstart', killTouch, { capture: true })
+            canvas.removeEventListener('touchend', killTouch, { capture: true })
         }
     }, [isActive, mode, color, lineWidth, materialId, pageNumber, updateBuffer])
 

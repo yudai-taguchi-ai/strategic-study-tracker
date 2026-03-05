@@ -89,6 +89,8 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                 touch-action: none !important;
                 -webkit-user-select: none !important;
                 user-select: none !important;
+                -webkit-touch-callout: none !important;
+                -webkit-tap-highlight-color: transparent !important;
                 overscroll-behavior: none !important;
                 overflow: hidden !important;
             }
@@ -107,6 +109,13 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
             }
         }
 
+        // Active selection killer - prevents the "Blue Film"
+        const killSelection = () => {
+            if (isPencilMode) {
+                window.getSelection()?.removeAllRanges()
+            }
+        }
+
         // Double-tap zoom killing (Capturing phase)
         window.addEventListener('dblclick', killEvent, { capture: true })
         // Multi-touch zoom prevention
@@ -115,12 +124,17 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
         }, { capture: true, passive: false })
         // Context menu suppression
         window.addEventListener('contextmenu', killEvent, { capture: true })
+        // Selection killing
+        window.addEventListener('selectstart', killEvent, { capture: true })
+        window.addEventListener('selectionchange', killSelection, { capture: true })
 
         return () => {
             document.getElementById('pencil-lock-style')?.remove()
             window.removeEventListener('dblclick', killEvent, { capture: true })
             window.removeEventListener('touchstart', killEvent)
             window.removeEventListener('contextmenu', killEvent, { capture: true })
+            window.removeEventListener('selectstart', killEvent, { capture: true })
+            window.removeEventListener('selectionchange', killSelection, { capture: true })
         }
     }, [isPencilMode])
 
@@ -237,7 +251,13 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
             {/* 3. Main Content - Takes 100% space in Pencil Mode */}
             <div
                 className={`flex-1 overflow-auto flex justify-center items-start scrollbar-hide relative bg-black ${isPencilMode ? 'touch-none select-none pt-0' : 'pt-0'}`}
-                style={isPencilMode ? { WebkitTouchCallout: 'none', WebkitUserSelect: 'none', touchAction: 'none' } : {}}
+                style={isPencilMode ? {
+                    WebkitTouchCallout: 'none',
+                    WebkitUserSelect: 'none',
+                    userSelect: 'none',
+                    WebkitTapHighlightColor: 'transparent',
+                    touchAction: 'none'
+                } : {}}
                 onContextMenu={(e) => isPencilMode && e.preventDefault()}
             >
                 <div className="relative shadow-2xl bg-white origin-top">

@@ -138,6 +138,8 @@ export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = 
 
             e.preventDefault()
             e.stopImmediatePropagation()
+            // 選択の種を完全に断つ
+            window.getSelection()?.removeAllRanges()
 
             isDrawingRef.current = true
             const rect = canvas.getBoundingClientRect()
@@ -163,6 +165,7 @@ export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = 
             if (!isActive || !isDrawingRef.current || mode === 'eraser') return
             e.preventDefault()
             e.stopImmediatePropagation()
+            window.getSelection()?.removeAllRanges()
 
             const ctx = ctxRef.current
             const rect = rectRef.current
@@ -237,6 +240,9 @@ export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = 
                 display: 'block',
                 willChange: 'transform, contents',
                 transform: 'translateZ(0)', // GPUレイヤーを強制
+                WebkitUserSelect: 'none',
+                WebkitTouchCallout: 'none',
+                WebkitTapHighlightColor: 'transparent',
                 cursor: isActive ? (mode === 'pen' ? 'crosshair' : 'cell') : 'default',
                 pointerEvents: isActive ? 'auto' : 'none'
             }}

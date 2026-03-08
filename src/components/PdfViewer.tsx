@@ -321,7 +321,7 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
 
             {/* 3. Main Content - Takes 100% space in Pencil Mode */}
             <div
-                className={`flex-1 overflow-auto flex justify-center items-start scrollbar-hide relative bg-black ${isPencilMode ? 'touch-none select-none pt-0' : 'pt-0'}`}
+                className={`flex-1 overflow-auto flex justify-center items-start scrollbar-hide relative bg-black ${isPencilMode ? 'touch-none select-none pt-0' : 'pt-0'} pb-40`}
                 style={isPencilMode ? {
                     WebkitTouchCallout: 'none',
                     WebkitUserSelect: 'none',

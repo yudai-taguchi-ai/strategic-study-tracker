@@ -464,18 +464,62 @@ export async function getCourseMaterials(courseId: string) {
     return data as Material[]
 }
 
-export async function translateText(text: string) {
-    if (!text || text.trim().length === 0) return ""
+/**
+ * PDFから抽出されたテキストをクリーンアップする
+ */
+function cleanPdfText(text: string): string {
+    return text
+        .replace(/([a-z])-\s*\n\s*([a-z])/gi, '$1$2') // ハイフンによる単語の分断を結合 (例: "hyphen-\nated" -> "hyphenated")
+        .replace(/\s*\n\s*/g, ' ')                  // 改行をスペースに置換
+        .replace(/\s+/g, ' ')                       // 連続するスペースを統合
+        .trim()
+}
 
+export async function translateText(text: string) {
+    const cleanedText = cleanPdfText(text)
+    if (!cleanedText || cleanedText.length === 0) return ""
+
+    const deeplKey = process.env.DEEPL_API_KEY
+
+    // DeepL APIが設定されている場合はDeepLを使用 (高精度)
+    if (deeplKey) {
+        try {
+            const isFree = deeplKey.endsWith(':fx')
+            const host = isFree ? 'api-free.deepl.com' : 'api.deepl.com'
+            const response = await fetch(`https://${host}/v2/translate`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `DeepL-Auth-Key ${deeplKey}`,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    text: cleanedText,
+                    target_lang: 'JA',
+                }),
+            })
+
+            if (response.ok) {
+                const data = await response.json()
+                return data.translations[0].text
+            }
+            console.error("DeepL API error:", response.status, await response.text())
+            // 失敗した場合は下のGoogle翻訳へフォールバック
+        } catch (error) {
+            console.error("DeepL connection error:", error)
+        }
+    }
+
+    // Google Translate Web API (フォールバック)
     try {
-        const response = await fetch(
-            `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|ja`
-        )
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=${encodeURIComponent(cleanedText)}`
+
+        const response = await fetch(url)
         const data = await response.json()
 
-        if (data && data.responseData) {
-            return data.responseData.translatedText
+        if (data && data[0]) {
+            return data[0].map((s: any) => s[0]).join('')
         }
+
         return "翻訳に失敗しました"
     } catch (error) {
         console.error("Translation error:", error)

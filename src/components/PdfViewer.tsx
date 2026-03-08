@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useTransition } from 'react'
 import { Document, Page, pdfjs } from 'react-pdf'
-import { ChevronLeft, ChevronRight, Edit3, Eraser, ArrowLeft, ZoomIn, ZoomOut, RefreshCw, X, Hand } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Edit3, Eraser, ArrowLeft, ZoomIn, ZoomOut, RefreshCw, X, Hand, Languages } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { updateProgress, getAnnotations } from '@/app/actions'
+import { updateProgress, getAnnotations, translateText } from '@/app/actions'
+import { useRef, useMemo, useCallback } from 'react'
 import { AnnotationCanvas } from './AnnotationCanvas'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
@@ -27,13 +28,18 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
 
     // Handwriting tools state
     const [isPencilMode, setIsPencilMode] = useState(false)
-    const [activeTool, setActiveTool] = useState<'pen' | 'eraser'>('pen')
+    const [activeTool, setActiveTool] = useState<'pen' | 'eraser' | 'translate'>('pen')
     const [activeColor, setActiveColor] = useState('#FF3B30')
     const [lineWidth, setLineWidth] = useState(2)
     const [initialAnnotations, setInitialAnnotations] = useState<any[]>([])
     const router = useRouter()
     const [containerWidth, setContainerWidth] = useState<number>(1000)
     const [hasSyncedTotalPages, setHasSyncedTotalPages] = useState(false)
+
+    // Translation State
+    const [translationResult, setTranslationResult] = useState<{ original: string, translated: string } | null>(null)
+    const [isTranslating, setIsTranslating] = useState(false)
+    const pdfPageRef = useRef<any>(null)
 
     // Window Resize Handler - Maximize for iPad
     useEffect(() => {
@@ -167,6 +173,52 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
     const goToNextPage = () => setPageNumber(p => Math.min(numPages, p + 1))
     const handleResetScale = () => setScale(1.0)
 
+    const handleTranslate = async (boundingBox: { left: number, top: number, right: number, bottom: number }) => {
+        if (!pdfPageRef.current) return
+
+        setIsTranslating(true)
+        setTranslationResult(null)
+
+        try {
+            const page = pdfPageRef.current
+            const textContent = await page.getTextContent()
+            const viewport = page.getViewport({ scale: 1.0 })
+
+            const extractedText = textContent.items
+                .map((item: any) => {
+                    const tx = item.transform[4]
+                    const ty = item.transform[5]
+
+                    // PDF.js固有の変換ユーティリティを使用して正確な座標（Viewport空間）を取得
+                    const [vx, vy] = viewport.convertToViewportPoint(tx, ty)
+
+                    // 0-1の正規化座標に変換してBounding Boxと比較
+                    const nx = vx / viewport.width
+                    const ny = vy / viewport.height
+
+                    if (nx >= boundingBox.left && nx <= boundingBox.right &&
+                        ny >= boundingBox.top && ny <= boundingBox.bottom) {
+                        return item.str
+                    }
+                    return null
+                })
+                .filter(Boolean)
+                .join(' ')
+
+            if (extractedText.trim()) {
+                const translated = await translateText(extractedText)
+                setTranslationResult({ original: extractedText, translated })
+            } else {
+                setTranslationResult({ original: "", translated: "テキストが見つかりませんでした。範囲を変えてお試しください。" })
+            }
+        } catch (error) {
+            console.error("Extraction error:", error)
+            setTranslationResult({ original: "", translated: "テキストの抽出に失敗しました。" })
+        } finally {
+            setIsTranslating(false)
+        }
+    }
+
     return (
         <div
             className={`flex flex-col h-screen bg-black overflow-hidden relative ${isPencilMode ? 'select-none touch-none cursor-crosshair' : ''}`}
@@ -226,8 +278,8 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                 </div>
             </div>
 
-            {/* 2. Floating Pencil Toolbar - Centered at top, truly isolated from the layout */}
-            {isPencilMode && (
+            {/* 2. Floating Pencil Toolbar - Only visible during pencil/eraser use */}
+            {isPencilMode && activeTool !== 'translate' && (
                 <div className="fixed top-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-surface-2/90 backdrop-blur-xl p-1.5 rounded-3xl border border-white/10 z-[500] shadow-2xl scale-110">
                     <button
                         onClick={() => setIsPencilMode(false)}
@@ -292,6 +344,7 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                                 width={containerWidth}
                                 renderAnnotationLayer={false}
                                 renderTextLayer={false}
+                                onLoadSuccess={(page) => { pdfPageRef.current = page }}
                             />
                         </Document>
                     </div>
@@ -304,13 +357,45 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                         mode={activeTool}
                         color={activeColor}
                         lineWidth={lineWidth}
+                        onTranslate={handleTranslate}
                     />
                 </div>
             </div>
 
+            {/* Translation Result UI */}
+            {(isTranslating || translationResult) && (
+                <div className="fixed top-24 left-1/2 -translate-x-1/2 w-[90%] max-w-lg bg-surface-2/95 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl z-[700] p-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-2 text-white/40">
+                            <Languages size={18} />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Translation Result</span>
+                        </div>
+                        <button onClick={() => setTranslationResult(null)} className="p-1 text-white/20 hover:text-white transition">
+                            <X size={20} />
+                        </button>
+                    </div>
+
+                    {isTranslating ? (
+                        <div className="py-8 flex flex-col items-center gap-4">
+                            <div className="w-8 h-8 border-2 border-white/10 border-t-white rounded-full animate-spin" />
+                            <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Translating...</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                                <p className="text-xs text-white/50 leading-relaxed italic">"{translationResult?.original}"</p>
+                            </div>
+                            <div className="p-5 bg-white text-black rounded-2xl shadow-xl">
+                                <p className="text-sm font-bold leading-relaxed">{translationResult?.translated}</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* iPad Nav Controls - Always visible */}
             <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-surface-2/90 backdrop-blur-2xl border border-white/10 px-6 py-3 rounded-[32px] shadow-2xl z-[600] min-w-[320px] md:min-w-[700px] transition-all duration-500`}>
-                {/* 1. Mode Toggle (Side-by-side) */}
+                {/* 1. Mode Toggle (3-way) */}
                 <div className="flex items-center gap-1 bg-white/5 p-1 rounded-2xl border border-white/5 mr-2">
                     <button
                         onClick={() => setIsPencilMode(false)}
@@ -321,10 +406,17 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                     </button>
                     <button
                         onClick={() => { setIsPencilMode(true); setActiveTool('pen') }}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${isPencilMode ? 'bg-white text-black shadow-lg scale-105' : 'text-gray-400 hover:text-white'}`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${isPencilMode && activeTool !== 'translate' ? 'bg-white text-black shadow-lg scale-105' : 'text-gray-400 hover:text-white'}`}
                     >
                         <Edit3 size={16} strokeWidth={3} />
                         <span className="hidden sm:inline">Pencil</span>
+                    </button>
+                    <button
+                        onClick={() => { setIsPencilMode(true); setActiveTool('translate') }}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${isPencilMode && activeTool === 'translate' ? 'bg-white text-black shadow-lg scale-105' : 'text-gray-400 hover:text-white'}`}
+                    >
+                        <Languages size={16} strokeWidth={3} />
+                        <span className="hidden sm:inline">Translate</span>
                     </button>
                 </div>
 

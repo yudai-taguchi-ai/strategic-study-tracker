@@ -20,12 +20,13 @@ interface Props {
     pageNumber: number
     initialAnnotations?: any[]
     isActive: boolean
-    mode: 'pen' | 'eraser'
+    mode: 'pen' | 'eraser' | 'translate'
     color: string
     lineWidth: number
+    onTranslate?: (boundingBox: { left: number, top: number, right: number, bottom: number }) => void
 }
 
-export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = [], isActive, mode, color, lineWidth }: Props) {
+export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = [], isActive, mode, color, lineWidth, onTranslate }: Props) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
 
@@ -71,7 +72,7 @@ export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = 
         strokesRef.current.forEach(s => {
             bctx.beginPath()
             bctx.strokeStyle = s.color
-            bctx.lineWidth = s.width * ratio
+            bctx.lineWidth = s.width * ratio // Use s.width as per original Stroke interface
             bctx.lineJoin = 'round'
             bctx.lineCap = 'round'
             drawSmoothPath(bctx, s.points, bg.width, bg.height)
@@ -190,6 +191,18 @@ export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = 
                 if (mode === 'eraser') {
                     // 移動中も連続して消去判定を行う（ブラシ消しゴム）
                     eraseAt(x, y)
+                } else if (mode === 'translate') {
+                    // 翻訳モード（なげなわ）の描画
+                    const last = currentPointsRef.current[currentPointsRef.current.length - 1]
+                    ctx.strokeStyle = '#007AFF'
+                    ctx.lineWidth = 2 * ratio
+                    ctx.setLineDash([5, 5]) // 点線
+                    ctx.beginPath()
+                    ctx.moveTo(last.x * rect.width * ratio, last.y * rect.height * ratio)
+                    ctx.lineTo(x * rect.width * ratio, y * rect.height * ratio)
+                    ctx.stroke()
+                    ctx.setLineDash([]) // リセット
+                    currentPointsRef.current.push({ x, y })
                 } else {
                     const last = currentPointsRef.current[currentPointsRef.current.length - 1]
 
@@ -211,23 +224,45 @@ export function AnnotationCanvas({ materialId, pageNumber, initialAnnotations = 
             })
         }
 
-        const handleUp = (e: PointerEvent) => {
+        const handleUp = async (e: PointerEvent) => {
             if (!isDrawingRef.current) return
             isDrawingRef.current = false
             canvas.releasePointerCapture(e.pointerId)
 
-            if (currentPointsRef.current.length > 1 && mode !== 'eraser') {
-                const tempId = 'temp-' + Date.now()
-                const newStroke = { id: tempId, points: [...currentPointsRef.current], color, width: lineWidth }
-                strokesRef.current.push(newStroke)
-                updateBuffer()
-
-                saveAnnotation({ material_id: materialId, page_number: pageNumber, type: 'stroke', data: newStroke })
-                    .then(saved => {
-                        const idx = strokesRef.current.findIndex(s => s.id === tempId)
-                        if (idx !== -1) strokesRef.current[idx].id = saved.id
-                    })
+            if (mode === 'eraser') {
+                currentPointsRef.current = []
+                return
             }
+
+            if (mode === 'translate') {
+                // なげなわ終了：範囲を計算して翻訳リクエストを送る
+                if (currentPointsRef.current.length > 5 && onTranslate) {
+                    const l = Math.min(...currentPointsRef.current.map(p => p.x))
+                    const t = Math.min(...currentPointsRef.current.map(p => p.y))
+                    const r = Math.max(...currentPointsRef.current.map(p => p.x))
+                    const b = Math.max(...currentPointsRef.current.map(p => p.y))
+                    onTranslate({ left: l, top: t, right: r, bottom: b })
+                }
+                updateBuffer() // 点線を消去
+                currentPointsRef.current = []
+                return
+            }
+
+            if (currentPointsRef.current.length < 2) {
+                currentPointsRef.current = []
+                return
+            }
+
+            const tempId = 'temp-' + Date.now()
+            const newStroke: Stroke = { id: tempId, points: [...currentPointsRef.current], color, width: lineWidth } // Use width as per original Stroke interface
+            strokesRef.current.push(newStroke)
+            updateBuffer()
+
+            saveAnnotation({ material_id: materialId, page_number: pageNumber, type: 'stroke', data: newStroke })
+                .then(saved => {
+                    const idx = strokesRef.current.findIndex(s => s.id === tempId)
+                    if (idx !== -1) strokesRef.current[idx].id = saved.id
+                })
             currentPointsRef.current = []
         }
 

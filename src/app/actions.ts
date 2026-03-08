@@ -463,3 +463,22 @@ export async function getCourseMaterials(courseId: string) {
     }
     return data as Material[]
 }
+
+export async function translateText(text: string) {
+    if (!text || text.trim().length === 0) return ""
+
+    try {
+        const response = await fetch(
+            `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|ja`
+        )
+        const data = await response.json()
+
+        if (data && data.responseData) {
+            return data.responseData.translatedText
+        }
+        return "翻訳に失敗しました"
+    } catch (error) {
+        console.error("Translation error:", error)
+        return "翻訳エラーが発生しました"
+    }
+}

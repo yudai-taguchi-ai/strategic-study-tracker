@@ -528,17 +528,30 @@ export async function translateText(text: string) {
     }
 }
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY!);
-
 export async function askAi(text: string) {
     const cleanedText = cleanPdfText(text)
     if (!cleanedText || cleanedText.length === 0) return ""
 
-    try {
-        // 現在利用可能な最新の高速モデル gemini-2.0-flash を使用します
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    // ユーザー指定の環境変数名、または既存の設定名から取得
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
-        const prompt = `あなたは非常に優秀な学習支援AIアシスタントです。
+    if (!apiKey) {
+        return "AI API Keyが設定されていません。Vercelまたは.envでGEMINI_API_KEYを設定してください。"
+    }
+
+    try {
+        // ご指定の API v1 と gemini-2.5-flash モデルを使用
+        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{
+                        text: `あなたは非常に優秀な学習支援AIアシスタントです。
 提供されたテキストを単に翻訳するだけでなく、以下の内容を含めて日本語で詳しく解説してください：
 
 1. 要約・翻訳（自然な日本語で）
@@ -548,12 +561,26 @@ export async function askAi(text: string) {
 回答は読みやすく、学習の助けになるように構成してください。
 
 抽出テキスト:
-"${cleanedText}"`;
+"${cleanedText}"`
+                    }]
+                }]
+            })
+        })
 
-        const result = await model.generateContent(prompt);
-        return result.response.text();
+        if (!response.ok) {
+            const status = response.status;
+            const errorData = await response.text();
+            return `AIエラー (${status}): モデル名またはバージョンを確認してください。詳細: ${errorData.substring(0, 50)}...`;
+        }
+
+        const data = await response.json()
+        if (data && data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+            return data.candidates[0].content.parts[0].text
+        }
+
+        return "AIから有効な回答が得られませんでした。"
     } catch (error) {
         console.error("AI Assistant Error:", error);
-        return `AIエラー: ${error instanceof Error ? error.message : String(error)}`;
+        return `AI接続エラー: ${error instanceof Error ? error.message : String(error)}`;
     }
 }

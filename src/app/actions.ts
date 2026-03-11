@@ -537,7 +537,7 @@ export async function askAi(text: string) {
     }
 
     try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`
+        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`
 
         const response = await fetch(url, {
             method: 'POST',

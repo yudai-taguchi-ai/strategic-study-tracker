@@ -537,7 +537,7 @@ export async function askAi(text: string) {
     }
 
     try {
-        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`
+        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`
 
         const response = await fetch(url, {
             method: 'POST',
@@ -573,7 +573,7 @@ export async function askAi(text: string) {
             } catch (e) {
                 errorDetail = await response.text();
             }
-            return `AIエラー (${status}): ${errorDetail.substring(0, 100)}`;
+            return `AIエラー Ver.2 (${status}): ${errorDetail.substring(0, 100)}`;
         }
 
         const data = await response.json()

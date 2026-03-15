@@ -454,52 +454,52 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                             </button>
                         </div>
 
-                    </div>
+                        {/* Content Area */}
+                        {isTranslating ? (
+                            <div className="p-12 flex flex-col items-center gap-6">
+                                <div className="w-10 h-10 border-4 border-white/10 border-t-blue-500 rounded-full animate-spin" />
+                                <p className="text-xs font-black uppercase tracking-widest text-white/50">AI is thinking...</p>
+                            </div>
+                        ) : pendingText ? (
+                            <div className="flex-1 overflow-y-auto p-6 pt-2 space-y-6">
+                                <div className="space-y-3">
+                                    <label className="text-xs font-black uppercase tracking-widest text-white/50">対象テキスト</label>
+                                    <div className="p-5 bg-black/40 rounded-2xl border border-white/10">
+                                        <p className="text-sm text-white/80 leading-relaxed italic">{pendingText}</p>
+                                    </div>
+                                </div>
 
-                    {/* Content Area */}
-                    {isTranslating ? (
-                        <div className="p-12 flex flex-col items-center gap-6">
-                            <div className="w-10 h-10 border-4 border-white/10 border-t-blue-500 rounded-full animate-spin" />
-                            <p className="text-xs font-black uppercase tracking-widest text-white/50">AI is thinking...</p>
-                        </div>
-                    ) : pendingText ? (
-                        <div className="flex-1 overflow-y-auto p-6 pt-2 space-y-6">
-                            <div className="space-y-3">
-                                <label className="text-xs font-black uppercase tracking-widest text-white/50">対象テキスト</label>
-                                <div className="p-5 bg-black/40 rounded-2xl border border-white/10">
-                                    <p className="text-sm text-white/80 leading-relaxed italic">{pendingText}</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <button
+                                        onClick={() => submitAiRequest("この文章の内容を自然な日本語に翻訳してください。")}
+                                        className="flex flex-col items-center justify-center gap-3 p-6 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-2xl transition-all group"
+                                    >
+                                        <Languages size={28} className="text-blue-400 group-hover:scale-110 transition-transform" />
+                                        <span className="text-base font-bold text-blue-100">翻訳する</span>
+                                    </button>
+                                    <button
+                                        onClick={() => submitAiRequest("このテキストの内容を中級者向けに簡潔に解説して。")}
+                                        className="flex flex-col items-center justify-center gap-3 p-6 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-2xl transition-all group"
+                                    >
+                                        <Edit3 size={28} className="text-purple-400 group-hover:scale-110 transition-transform" />
+                                        <span className="text-base font-bold text-purple-100">解説する</span>
+                                    </button>
                                 </div>
                             </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <button
-                                    onClick={() => submitAiRequest("この文章の内容を自然な日本語に翻訳してください。")}
-                                    className="flex flex-col items-center justify-center gap-3 p-6 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-2xl transition-all group"
-                                >
-                                    <Languages size={28} className="text-blue-400 group-hover:scale-110 transition-transform" />
-                                    <span className="text-base font-bold text-blue-100">翻訳する</span>
-                                </button>
-                                <button
-                                    onClick={() => submitAiRequest("このテキストの内容を中級者向けに簡潔に解説して。")}
-                                    className="flex flex-col items-center justify-center gap-3 p-6 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-2xl transition-all group"
-                                >
-                                    <Edit3 size={28} className="text-purple-400 group-hover:scale-110 transition-transform" />
-                                    <span className="text-base font-bold text-purple-100">解説する</span>
-                                </button>
+                        ) : (
+                            <div className="flex-1 overflow-y-auto p-6 pt-2 space-y-4">
+                                <div className="p-4 bg-black/40 rounded-2xl border border-white/10">
+                                    <p className="text-sm text-white/50 leading-relaxed italic">"{translationResult?.original}"</p>
+                                </div>
+                                <div className="p-6 bg-white text-black rounded-3xl shadow-xl border border-white/10 text-base">
+                                    <p className="font-medium leading-[1.8] whitespace-pre-wrap">{translationResult?.translated}</p>
+                                </div>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="flex-1 overflow-y-auto p-6 pt-2 space-y-4">
-                            <div className="p-4 bg-black/40 rounded-2xl border border-white/10">
-                                <p className="text-sm text-white/50 leading-relaxed italic">"{translationResult?.original}"</p>
-                            </div>
-                            <div className="p-6 bg-white text-black rounded-3xl shadow-xl border border-white/10 text-base">
-                                <p className="font-medium leading-[1.8] whitespace-pre-wrap">{translationResult?.translated}</p>
-                            </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             )}
+
 
             {/* iPad Nav Controls - Always visible */}
             <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-surface-2/90 backdrop-blur-2xl border border-white/10 px-6 py-3 rounded-[32px] shadow-2xl z-[600] min-w-[320px] md:min-w-[700px] transition-all duration-500`}>
@@ -568,6 +568,6 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                     <button onClick={goToNextPage} disabled={pageNumber >= numPages} className="p-2 text-white hover:bg-white/10 rounded-xl disabled:opacity-20 transition-colors"><ChevronRight size={24} /></button>
                 </div>
             </div>
-        </div>
+        </div >
     )
 }

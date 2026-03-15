@@ -141,10 +141,9 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
         const handleTouchStart = (e: TouchEvent) => {
             if (!isPencilMode) return
 
-            // ツールバー以外へのタッチはすべて最優先レイヤーで preventDefault する
-            // これにより指1本であっても、iPadOSの「長押しメニュー」の起点を物理的に破壊する
+            // ツールバー、または AI アシスタントのモーダル内へのタッチは例外として許可する
             const target = e.target as HTMLElement;
-            if (target.closest('button') || target.closest('input')) return;
+            if (target.closest('button') || target.closest('input') || target.closest('.ai-modal')) return;
 
             if (e.cancelable) {
                 e.preventDefault()
@@ -301,7 +300,7 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
 
     return (
         <div
-            className={`flex flex-col h-screen bg-black overflow-hidden relative ${isPencilMode ? 'select-none touch-none cursor-crosshair' : ''}`}
+            className={`flex flex-col h-screen bg-black overflow-hidden relative ${isPencilMode && !translationResult && !isTranslating && !pendingText ? 'select-none touch-none cursor-crosshair' : ''}`}
             onDoubleClick={(e) => isPencilMode && e.preventDefault()}
             {...({ 'disable-live-text-selection': isPencilMode ? 'true' : 'false' } as any)}
         >
@@ -446,7 +445,7 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
             {(isTranslating || translationResult || pendingText) && (
                 <div className="fixed inset-0 flex items-center justify-center p-4 md:p-10 pointer-events-none" style={{ zIndex: 9999 }}>
                     <div
-                        className="w-full max-w-2xl bg-[#1C1C1E] border border-white/10 rounded-[32px] pointer-events-auto flex flex-col shadow-[0_0_100px_rgba(0,0,0,1)] relative overflow-hidden"
+                        className="w-full max-w-2xl bg-[#1C1C1E] border border-white/10 rounded-[32px] pointer-events-auto flex flex-col shadow-[0_0_100px_rgba(0,0,0,1)] relative overflow-hidden ai-modal"
                         style={{
                             height: 'calc(var(--vh, 1vh) * 80)',
                             maxHeight: '800px'

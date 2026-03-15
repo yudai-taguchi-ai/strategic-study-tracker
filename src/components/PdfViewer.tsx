@@ -461,7 +461,7 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                                 <p className="text-xs font-black uppercase tracking-widest text-white/50">AI is thinking...</p>
                             </div>
                         ) : pendingText ? (
-                            <div className="flex-1 overflow-y-auto p-6 pt-2 space-y-6">
+                            <div className="flex-1 min-h-0 overflow-y-auto p-6 pt-2 space-y-6">
                                 <div className="space-y-3">
                                     <label className="text-xs font-black uppercase tracking-widest text-white/50">対象テキスト</label>
                                     <div className="p-5 bg-black/40 rounded-2xl border border-white/10">
@@ -487,7 +487,7 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex-1 overflow-y-auto p-6 pt-2 space-y-4">
+                            <div className="flex-1 min-h-0 overflow-y-auto p-6 pt-2 space-y-4">
                                 <div className="p-4 bg-black/40 rounded-2xl border border-white/10">
                                     <p className="text-sm text-white/50 leading-relaxed italic">"{translationResult?.original}"</p>
                                 </div>

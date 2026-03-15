@@ -540,8 +540,8 @@ export async function askAi(text: string, userPrompt?: string) {
     }
 
     try {
-        // ご指定の API v1 と gemini-2.5-flash モデルを使用
-        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`
+        // ご指定の API v1 と gemini-3.0-flash モデルを使用
+        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-3.0-flash:generateContent?key=${apiKey}`
 
         const promptText = userPrompt
             ? `以下のテキストに対し、追加指示に従って処理を行ってください。

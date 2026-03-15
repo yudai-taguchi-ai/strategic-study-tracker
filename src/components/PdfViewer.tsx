@@ -443,11 +443,11 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
             {(isTranslating || translationResult || pendingText) && (
                 <div className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none" style={{ zIndex: 9999 }}>
                     <div
-                        className="w-full max-w-2xl bg-[#1C1C1E] border border-white/10 rounded-[32px] shadow-2xl pointer-events-auto overflow-hidden animate-in fade-in zoom-in-95 duration-300"
+                        className="w-full max-w-2xl bg-[#1C1C1E] border border-white/10 rounded-[32px] shadow-2xl pointer-events-auto overflow-hidden animate-in fade-in zoom-in-95 duration-300 flex flex-col relative"
                         style={{ height: '70vh', maxHeight: '800px' }}
                     >
-                        {/* Header - Absolute Top */}
-                        <div className="h-[76px] px-6 border-b border-white/10 flex justify-between items-center bg-[#2C2C2E] z-20">
+                        {/* Header - Fixed Height */}
+                        <div className="flex-none h-[76px] px-6 border-b border-white/10 flex justify-between items-center bg-[#2C2C2E] z-20 relative">
                             <div className="flex items-center gap-2 text-white/40">
                                 <Languages size={18} className="text-blue-400" />
                                 <span className="text-[10px] font-black uppercase tracking-widest">AI Assistant</span>
@@ -457,53 +457,55 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                             </button>
                         </div>
 
-                        {/* Content Area - Absolute Bounded */}
-                        <div
-                            className="w-full bg-[#1C1C1E]"
-                            style={{ height: 'calc(100% - 76px)', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
-                        >
-                            <div className="p-6 md:p-8 space-y-8 pb-12">
-                                {isTranslating ? (
-                                    <div className="flex flex-col items-center justify-center py-20 gap-6">
-                                        <div className="w-10 h-10 border-4 border-white/10 border-t-blue-500 rounded-full animate-spin" />
-                                        <p className="text-xs font-black uppercase tracking-widest text-white/50">AI is thinking...</p>
-                                    </div>
-                                ) : pendingText ? (
-                                    <>
-                                        <div className="space-y-3">
-                                            <label className="text-xs font-black uppercase tracking-widest text-white/50">対象テキスト</label>
-                                            <div className="p-6 bg-black/40 rounded-2xl border border-white/10">
-                                                <p className="text-sm text-white/80 leading-relaxed italic">{pendingText}</p>
+                        {/* Content Area - Absolute bounded to flex remainder */}
+                        <div className="flex-1 relative w-full bg-[#1C1C1E]">
+                            <div
+                                className="absolute inset-0 overflow-y-auto"
+                                style={{ WebkitOverflowScrolling: 'touch' }}
+                            >
+                                <div className="p-6 md:p-8 space-y-8 pb-12">
+                                    {isTranslating ? (
+                                        <div className="flex flex-col items-center justify-center py-20 gap-6">
+                                            <div className="w-10 h-10 border-4 border-white/10 border-t-blue-500 rounded-full animate-spin" />
+                                            <p className="text-xs font-black uppercase tracking-widest text-white/50">AI is thinking...</p>
+                                        </div>
+                                    ) : pendingText ? (
+                                        <>
+                                            <div className="space-y-3">
+                                                <label className="text-xs font-black uppercase tracking-widest text-white/50">対象テキスト</label>
+                                                <div className="p-6 bg-black/40 rounded-2xl border border-white/10">
+                                                    <p className="text-sm text-white/80 leading-relaxed italic">{pendingText}</p>
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        <div className="grid grid-cols-1 gap-4">
-                                            <button
-                                                onClick={() => submitAiRequest("この文章を自然な日本語に翻訳してください（翻訳結果の文章以外は一切出力しないでください）。")}
-                                                className="flex flex-col items-center justify-center gap-3 p-6 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-2xl transition-all group"
-                                            >
-                                                <Languages size={28} className="text-blue-400 group-hover:scale-110 transition-transform" />
-                                                <span className="text-base font-bold text-blue-100">翻訳する</span>
-                                            </button>
-                                            <button
-                                                onClick={() => submitAiRequest("このテキストの内容を中級者向けに簡潔に解説して。")}
-                                                className="flex flex-col items-center justify-center gap-3 p-6 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-2xl transition-all group"
-                                            >
-                                                <Edit3 size={28} className="text-purple-400 group-hover:scale-110 transition-transform" />
-                                                <span className="text-base font-bold text-purple-100">解説する</span>
-                                            </button>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="p-5 bg-black/40 rounded-2xl border border-white/10">
-                                            <p className="text-sm text-white/50 leading-relaxed italic">"{translationResult?.original}"</p>
-                                        </div>
-                                        <div className="p-6 md:p-8 bg-white text-black rounded-3xl shadow-2xl border border-black/10">
-                                            <p className="font-medium leading-[2] text-[15px] whitespace-pre-wrap text-black">{translationResult?.translated}</p>
-                                        </div>
-                                    </>
-                                )}
+                                            <div className="grid grid-cols-1 gap-4">
+                                                <button
+                                                    onClick={() => submitAiRequest("この文章を自然な日本語に翻訳してください（翻訳結果の文章以外は一切出力しないでください）。")}
+                                                    className="flex flex-col items-center justify-center gap-3 p-6 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-2xl transition-all group"
+                                                >
+                                                    <Languages size={28} className="text-blue-400 group-hover:scale-110 transition-transform" />
+                                                    <span className="text-base font-bold text-blue-100">翻訳する</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => submitAiRequest("このテキストの内容を中級者向けに簡潔に解説して。")}
+                                                    className="flex flex-col items-center justify-center gap-3 p-6 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-2xl transition-all group"
+                                                >
+                                                    <Edit3 size={28} className="text-purple-400 group-hover:scale-110 transition-transform" />
+                                                    <span className="text-base font-bold text-purple-100">解説する</span>
+                                                </button>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="p-5 bg-black/40 rounded-2xl border border-white/10">
+                                                <p className="text-sm text-white/50 leading-relaxed italic">"{translationResult?.original}"</p>
+                                            </div>
+                                            <div className="p-6 md:p-8 bg-white text-black rounded-3xl shadow-2xl border border-black/10">
+                                                <p className="font-medium leading-[2] text-[15px] whitespace-pre-wrap text-black">{translationResult?.translated}</p>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>

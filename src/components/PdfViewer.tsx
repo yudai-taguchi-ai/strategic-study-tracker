@@ -475,7 +475,7 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                                     <span className="text-base font-bold text-blue-100">翻訳する</span>
                                 </button>
                                 <button
-                                    onClick={() => submitAiRequest("このテキストの内容を初心者にも分かりやすく、要点を中心に簡潔に解説してください。概要と重要な用語の意味も含めてください。")}
+                                    onClick={() => submitAiRequest("このテキストの内容を中級者向けに簡潔に解説して。")}
                                     className="flex flex-col items-center justify-center gap-3 p-6 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-2xl transition-all group"
                                 >
                                     <Edit3 size={28} className="text-purple-400 group-hover:scale-110 transition-transform" />

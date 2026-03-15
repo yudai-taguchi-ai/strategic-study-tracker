@@ -41,11 +41,14 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
     const [isTranslating, setIsTranslating] = useState(false)
     const [pendingText, setPendingText] = useState<string | null>(null)
     const pdfPageRef = useRef<any>(null)
+    const [vh, setVh] = useState(0)
 
     // Window Resize Handler - Maximize for iPad
     useEffect(() => {
         function handleResize() {
             setContainerWidth(window.innerWidth)
+            setVh(window.innerHeight * 0.01)
+            document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`)
         }
         handleResize()
         window.addEventListener('resize', handleResize)
@@ -441,13 +444,16 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
 
             {/* Translation Result UI */}
             {(isTranslating || translationResult || pendingText) && (
-                <div className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none" style={{ zIndex: 9999 }}>
+                <div className="fixed inset-0 flex items-center justify-center p-4 md:p-10 pointer-events-none" style={{ zIndex: 9999 }}>
                     <div
-                        className="w-full max-w-2xl bg-[#1C1C1E] border border-white/10 rounded-[32px] pointer-events-auto flex flex-col"
-                        style={{ height: '70vh', maxHeight: '800px', overflow: 'hidden', isolation: 'isolate', boxShadow: '0 0 80px rgba(0,0,0,0.8)' }}
+                        className="w-full max-w-2xl bg-[#1C1C1E] border border-white/10 rounded-[32px] pointer-events-auto flex flex-col shadow-[0_0_100px_rgba(0,0,0,1)] relative overflow-hidden"
+                        style={{
+                            height: 'calc(var(--vh, 1vh) * 80)',
+                            maxHeight: '800px'
+                        }}
                     >
                         {/* Header - Fixed Height */}
-                        <div className="flex-none h-[76px] px-6 border-b border-white/10 flex justify-between items-center bg-[#2C2C2E]">
+                        <div className="flex-none h-[76px] px-6 border-b border-white/10 flex justify-between items-center bg-[#2C2C2E] shrink-0">
                             <div className="flex items-center gap-2 text-white/40">
                                 <Languages size={18} className="text-blue-400" />
                                 <span className="text-[10px] font-black uppercase tracking-widest">AI Assistant</span>
@@ -457,12 +463,15 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                             </button>
                         </div>
 
-                        {/* Content Area */}
+                        {/* Content Area - Absolute positioning to force scroll container behavior */}
                         <div
-                            className="flex-1 w-full bg-[#1C1C1E] custom-scrollbar"
-                            style={{ overflowY: 'auto' }}
+                            className="absolute inset-0 top-[76px] bg-[#1C1C1E] overflow-y-auto custom-scrollbar"
+                            style={{
+                                WebkitOverflowScrolling: 'touch',
+                                paddingRight: '2px'
+                            }}
                         >
-                            <div className="p-6 md:p-8 space-y-8 pb-12">
+                            <div className="p-6 md:p-8 space-y-8 pb-32">
                                 {isTranslating ? (
                                     <div className="flex flex-col items-center justify-center py-20 gap-6">
                                         <div className="w-10 h-10 border-4 border-white/10 border-t-blue-500 rounded-full animate-spin" />
@@ -470,14 +479,14 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                                     </div>
                                 ) : pendingText ? (
                                     <>
-                                        <div className="space-y-3">
+                                        <div className="space-y-3 shrink-0">
                                             <label className="text-xs font-black uppercase tracking-widest text-white/50">対象テキスト</label>
                                             <div className="p-6 bg-black/40 rounded-2xl border border-white/10">
                                                 <p className="text-sm text-white/80 leading-relaxed italic">{pendingText}</p>
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 gap-4">
+                                        <div className="grid grid-cols-1 gap-4 shrink-0">
                                             <button
                                                 onClick={() => submitAiRequest("この文章を自然な日本語に翻訳してください（翻訳結果の文章以外は一切出力しないでください）。")}
                                                 className="flex flex-col items-center justify-center gap-3 p-6 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-2xl transition-all group"
@@ -495,14 +504,14 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                                         </div>
                                     </>
                                 ) : (
-                                    <>
-                                        <div className="p-5 bg-black/40 rounded-2xl border border-white/10">
+                                    <div className="flex flex-col gap-6">
+                                        <div className="p-5 bg-black/40 rounded-2xl border border-white/10 shrink-0">
                                             <p className="text-sm text-white/50 leading-relaxed italic">"{translationResult?.original}"</p>
                                         </div>
-                                        <div className="p-6 md:p-8 bg-white text-black rounded-3xl shadow-2xl border border-black/10">
-                                            <p className="font-medium leading-[2] text-[15px] whitespace-pre-wrap text-black">{translationResult?.translated}</p>
+                                        <div className="p-6 md:p-8 bg-white text-black rounded-3xl shadow-2xl border border-black/10 shrink-0">
+                                            <p className="font-medium leading-[2] text-[15px] whitespace-pre-wrap break-words text-black">{translationResult?.translated}</p>
                                         </div>
-                                    </>
+                                    </div>
                                 )}
                             </div>
                         </div>

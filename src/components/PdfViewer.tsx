@@ -442,9 +442,9 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
             {/* Translation Result UI */}
             {(isTranslating || translationResult || pendingText) && (
                 <div className="fixed inset-0 z-[700] flex flex-col items-center justify-center p-4 pointer-events-none">
-                    <div className="w-full max-w-2xl max-h-[85vh] grid grid-rows-[auto_1fr] overflow-hidden bg-[#1A1A1A]/95 backdrop-blur-3xl border border-white/20 rounded-[32px] shadow-[0_0_80px_rgba(0,0,0,0.8)] pointer-events-auto animate-in fade-in zoom-in-95 duration-300">
+                    <div className="w-full max-w-2xl max-h-[85vh] flex flex-col bg-[#1A1A1A]/95 backdrop-blur-3xl border border-white/20 rounded-[32px] shadow-[0_0_80px_rgba(0,0,0,0.8)] pointer-events-auto overflow-hidden animate-in fade-in zoom-in-95 duration-300">
                         {/* Header */}
-                        <div className="p-6 pb-4 border-b border-white/10 flex justify-between items-start">
+                        <div className="shrink-0 p-6 pb-4 border-b border-white/10 flex justify-between items-start bg-[#1A1A1A]/50 backdrop-blur-md z-10 w-full">
                             <div className="flex items-center gap-2 text-white/40">
                                 <Languages size={18} className="text-blue-400" />
                                 <span className="text-[10px] font-black uppercase tracking-widest">AI Assistant</span>
@@ -456,12 +456,12 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
 
                         {/* Content Area */}
                         {isTranslating ? (
-                            <div className="p-12 flex flex-col items-center justify-center gap-6 overflow-hidden">
-                                <div className="w-10 h-10 border-4 border-white/10 border-t-blue-500 rounded-full animate-spin" />
-                                <p className="text-xs font-black uppercase tracking-widest text-white/50">AI is thinking...</p>
+                            <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-12 gap-6 overflow-hidden">
+                                <div className="w-10 h-10 border-4 border-white/10 border-t-blue-500 rounded-full animate-spin shrink-0" />
+                                <p className="text-xs font-black uppercase tracking-widest text-white/50 shrink-0">AI is thinking...</p>
                             </div>
                         ) : pendingText ? (
-                            <div className="overflow-y-auto overscroll-contain p-6 pt-2 space-y-6">
+                            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6 pt-2 space-y-6 scrollbar-hide">
                                 <div className="space-y-3">
                                     <label className="text-xs font-black uppercase tracking-widest text-white/50">対象テキスト</label>
                                     <div className="p-5 bg-black/40 rounded-2xl border border-white/10">
@@ -487,7 +487,7 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
                                 </div>
                             </div>
                         ) : (
-                            <div className="overflow-y-auto overscroll-contain p-6 pt-2 space-y-4">
+                            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6 pt-2 space-y-4 scrollbar-hide">
                                 <div className="p-4 bg-black/40 rounded-2xl border border-white/10 shrink-0">
                                     <p className="text-sm text-white/50 leading-relaxed italic">"{translationResult?.original}"</p>
                                 </div>

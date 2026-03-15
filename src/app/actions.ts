@@ -544,7 +544,7 @@ export async function askAi(text: string, userPrompt?: string) {
         const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`
 
         const promptText = userPrompt
-            ? `以下のテキストに対し、追加指示に従って日本語で解説してください。
+            ? `以下のテキストに対し、追加指示に従って処理を行ってください。
 
 【追加指示】
 ${userPrompt}
@@ -553,8 +553,9 @@ ${userPrompt}
 "${cleanedText}"
 
 【出力ルール】
-1. 数式や記号にLaTeX（$ や \\ を含む形式）を【絶対に】使用しないでください。
-2. 数式はUnicode文字や一般的な記号（x², √x, a/b 等）のみを使い、プレーンテキストとして読みやすく整形してください。`
+1. 追加指示が「翻訳」に関するものである場合、結果の日本語への翻訳文のみを出力し、挨拶や解説などは一切含めないでください。
+2. 数式や記号にLaTeX（$ や \\ を含む形式）を【絶対に】使用しないでください。
+3. 数式はUnicode文字や一般的な記号（x², √x, a/b 等）のみを使い、プレーンテキストとして読みやすく整形してください。`
             : `以下のテキストを日本語で解説してください。
 
 【対象テキスト】

@@ -471,7 +471,7 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <button
-                                        onClick={() => submitAiRequest("この文章の内容を自然な日本語に翻訳してください。")}
+                                        onClick={() => submitAiRequest("この文章を自然な日本語に翻訳してください（翻訳結果の文章以外は一切出力しないでください）。")}
                                         className="flex flex-col items-center justify-center gap-3 p-6 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-2xl transition-all group"
                                     >
                                         <Languages size={28} className="text-blue-400 group-hover:scale-110 transition-transform" />

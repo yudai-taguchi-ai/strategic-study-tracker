@@ -459,7 +459,7 @@ export function PdfViewer({ materialId, pdfUrl, initialPage, totalPageCount }: P
 
                         {/* Content Area */}
                         <div
-                            className="flex-1 w-full bg-[#1C1C1E]"
+                            className="flex-1 w-full bg-[#1C1C1E] custom-scrollbar"
                             style={{ overflowY: 'auto' }}
                         >
                             <div className="p-6 md:p-8 space-y-8 pb-12">

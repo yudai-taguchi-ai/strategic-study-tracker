@@ -29,4 +29,38 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
+
+    /* いつでもハッキリ見える明示的な太めのスクロールバー */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 14px;
+        height: 14px;
+        display: block;
+        /* 強制表示 */
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        /* うっすらとしたトラック背景 */
+        border-radius: 99px;
+        margin: 4px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.3);
+        /* 非常に目立つ白半透明 */
+        border-radius: 99px;
+        border: 3px solid #1C1C1E;
+        /* 背景と同色でフチ取り=丸みを持たせる */
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(255, 255, 255, 0.5);
+        /* ホバーでさらに明るく */
+    }
+
+    /* Firefox 用 */
+    .custom-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.05);
+    }
 }

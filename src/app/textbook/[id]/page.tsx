@@ -33,8 +33,8 @@ export default async function MaterialDetail({ params: paramsPromise }: Props) {
     const isWebsite = material.type === 'WEBSITE'
     const isCourse = material.type === 'COURSE'
 
-    // Fetch child materials if it's a course
-    const childMaterials = isCourse ? await getCourseMaterials(id) : []
+    // Fetch child materials for any type (not just course)
+    const childMaterials = await getCourseMaterials(id)
 
     return (
         <div className="max-w-6xl mx-auto pb-20 px-4 md:px-8">
@@ -180,9 +180,8 @@ export default async function MaterialDetail({ params: paramsPromise }: Props) {
                 </div>
             </div>
 
-            {/* Full-width Curriculum Section for Courses */}
-            {isCourse && (
-                <div className="space-y-10 mb-20 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+            {/* Full-width Curriculum Section - Shown for all types to allow nesting */}
+            <div className="space-y-10 mb-20 animate-in fade-in slide-in-from-bottom-4 duration-1000">
                     <div className="flex items-center justify-between border-b border-surface-3 pb-6">
                         <div className="flex items-center gap-4">
                             <div className="p-3 bg-orange-400/10 rounded-2xl">
@@ -190,9 +189,9 @@ export default async function MaterialDetail({ params: paramsPromise }: Props) {
                             </div>
                             <div>
                                 <h3 className="text-2xl font-black uppercase tracking-widest leading-none mb-1">
-                                    カリキュラム構成
+                                    構成教材・子要素
                                 </h3>
-                                <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Selected Curriculum</p>
+                                <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Selected Components</p>
                             </div>
                         </div>
                         <AddTextbookButton fields={fields} parentId={id} defaultFieldId={material.field_id} />
@@ -213,41 +212,42 @@ export default async function MaterialDetail({ params: paramsPromise }: Props) {
                         <div className="bg-surface-2/40 border-2 border-dashed border-surface-3 p-20 rounded-[3rem] text-center">
                             <h4 className="text-lg font-black uppercase tracking-widest text-gray-600 mb-2">No Contents Yet</h4>
                             <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">
-                                カリキュラムが追加されていません
+                                まだ子教材が追加されていません
                             </p>
                         </div>
                     )}
 
-                    {/* Action buttons specifically for course portal */}
+                    {/* Action buttons specifically for curriculum/container portal */}
                     <div className="pt-10 mt-20 border-t border-surface-3 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                        <div className="bg-surface-2 p-8 rounded-[2rem] border border-surface-3 relative overflow-hidden transition-all hover:bg-surface-2/60">
-                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                <LinkIcon size={14} />
-                                講座ポータル / 参考URL
-                            </p>
-                            <div className="text-sm font-mono text-blue-400 truncate bg-black/40 p-4 rounded-xl border border-surface-3 mb-8">
-                                {material.video_path || 'URLが設定されていません'}
-                            </div>
+                        {(material.video_path || isCourse) && (
+                            <div className="bg-surface-2 p-8 rounded-[2rem] border border-surface-3 relative overflow-hidden transition-all hover:bg-surface-2/60">
+                                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <LinkIcon size={14} />
+                                    {isCourse ? '講座ポータル / 参考URL' : '関連リンク / URL'}
+                                </p>
+                                <div className="text-sm font-mono text-blue-400 truncate bg-black/40 p-4 rounded-xl border border-surface-3 mb-8">
+                                    {material.video_path || 'URLが設定されていません'}
+                                </div>
 
-                            {material.video_path && (
-                                <a
-                                    href={material.video_path}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="bg-white text-black font-black uppercase tracking-widest text-[10px] px-8 py-5 rounded-2xl flex items-center justify-center gap-3 transition-all w-full shadow-2xl hover:-translate-y-1 hover:bg-gray-50"
-                                >
-                                    <LinkIcon size={18} strokeWidth={3} />
-                                    講座リンクを開く
-                                </a>
-                            )}
-                        </div>
+                                {material.video_path && (
+                                    <a
+                                        href={material.video_path}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="bg-white text-black font-black uppercase tracking-widest text-[10px] px-8 py-5 rounded-2xl flex items-center justify-center gap-3 transition-all w-full shadow-2xl hover:-translate-y-1 hover:bg-gray-50"
+                                    >
+                                        <LinkIcon size={18} strokeWidth={3} />
+                                        リンクを開く
+                                    </a>
+                                )}
+                            </div>
+                        )}
                         <div className="space-y-6">
                             <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-4">システム設定</p>
                             <DeleteMaterialButton id={material.id} title={material.title} />
                         </div>
                     </div>
                 </div>
-            )}
 
             <div className="mt-20 border-t border-surface-3 pt-10 grid grid-cols-1 md:grid-cols-2 gap-8 pb-32">
                 <div className="space-y-6">

@@ -16,7 +16,7 @@ export function AddTextbookButton({ fields, parentId, defaultFieldId }: { fields
                 className={`flex items-center gap-2 font-black uppercase tracking-widest text-xs transition-all active:scale-95 ${parentId ? 'bg-white text-black px-6 py-3 rounded-xl shadow-lg hover:shadow-xl' : 'text-gray-400 hover:text-white'}`}
             >
                 <Plus size={parentId ? 16 : 14} strokeWidth={3} />
-                {parentId ? 'この講座に教材を追加' : '教材を追加'}
+                {parentId ? 'この教材に子教材を追加' : '教材を追加'}
             </button>
 
             <AddTextbookModal
